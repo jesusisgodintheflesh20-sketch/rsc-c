@@ -1416,6 +1416,11 @@ void mudclient_load_media(mudclient *mud) {
 void mudclient_load_entities(mudclient *mud) {
 #if defined(RENDER_GL) || defined(RENDER_SW) || defined(RENDER_3DS_GL)
     char jag[16];
+    int load_member_sprites = mud->options->members;
+#ifdef OFFLINE_WORLD
+    /* Some 2001 creatures were moved into the later members art archive. */
+    load_member_sprites = 1;
+#endif
     snprintf(jag, sizeof(jag), "entity%d.jag", mud->options->version_entity);
 
     int8_t *entity_jag = mudclient_read_data_file(
@@ -1442,7 +1447,7 @@ void mudclient_load_entities(mudclient *mud) {
     int8_t *entity_jag_mem = NULL;
     int8_t *index_dat_mem = NULL;
 
-    if (mud->options->members && !ENTITY_IS_TGA(mud->options->version_entity)) {
+    if (load_member_sprites && !ENTITY_IS_TGA(mud->options->version_entity)) {
         snprintf(jag, sizeof(jag), "entity%d.mem",
             mud->options->version_entity);
 
@@ -1509,7 +1514,7 @@ void mudclient_load_entities(mudclient *mud) {
         int8_t *animation_dat = load_data(file_name, 0, archive_file, &len);
         int8_t *animation_index_dat = index_dat;
 
-        if (animation_dat == NULL && mud->options->members) {
+        if (animation_dat == NULL && load_member_sprites) {
             animation_dat = load_data(file_name, 0, entity_jag_mem, &len);
             animation_index_dat = index_dat_mem;
         }
@@ -1538,7 +1543,7 @@ void mudclient_load_entities(mudclient *mud) {
                 int8_t *a_dat = load_data(file_name, 0, archive_file, &len);
                 int8_t *a_index_dat = index_dat;
 
-                if (a_dat == NULL && mud->options->members) {
+                if (a_dat == NULL && load_member_sprites) {
                     a_dat = load_data(file_name, 0, entity_jag_mem, &len);
                     a_index_dat = index_dat_mem;
                 }
@@ -1564,7 +1569,7 @@ void mudclient_load_entities(mudclient *mud) {
                 int8_t *f_dat = load_data(file_name, 0, archive_file, &len);
                 int8_t *f_index_dat = index_dat;
 
-                if (f_dat == NULL && mud->options->members) {
+                if (f_dat == NULL && load_member_sprites) {
                     f_dat = load_data(file_name, 0, entity_jag_mem, &len);
                     f_index_dat = index_dat_mem;
                 }
