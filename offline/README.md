@@ -17,7 +17,7 @@ The server runs in the app's non-exported `:offline` service process, listening
 only on 127.0.0.1:43595. SDL connects using an automatically created local
 Adventurer character over the original RSA/ISAAC protocol. The service has a
 separate working directory and native globals; it cannot change the client's cwd.
-Assets and scripts are extracted on first use. There are no runtime downloads.
+Assets and scripts are extracted on first use and refreshed when the bundled asset version changes. Existing save databases are preserved. There are no runtime downloads.
 Both client and server use matching 2001 definitions and maps. The server
 archive uses its original text format; `tools/client_config.py` reproducibly
 converts those tables to binary client format, using texture names from the

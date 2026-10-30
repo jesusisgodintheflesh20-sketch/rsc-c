@@ -2,6 +2,7 @@ package org.scape2003.mudclient;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.SystemClock;
 import java.io.*;
 import java.net.*;
 
@@ -19,23 +20,64 @@ public final class OfflineWorld {
             }
         }
     }
-    public static synchronized boolean start(Context context) {
+    private static final Object unpackLock = new Object();
+    private static final long START_TIMEOUT_MS = 45000;
+    // 0 idle, 1 starting, 2 ready, -1 failed.
+    private static int state;
+    private static long startedAt;
+    private static int generation;
+
+    public static synchronized void begin(Context context) {
+        if (state == 1) return;
+        state = 1;
+        startedAt = SystemClock.elapsedRealtime();
+        final int attempt = ++generation;
+        final Context app = context.getApplicationContext();
+        new Thread(() -> launch(app, attempt), "offline-startup").start();
+    }
+
+    public static synchronized int getState() {
+        if (state == 1 && SystemClock.elapsedRealtime() - startedAt > START_TIMEOUT_MS) {
+            state = -1;
+            ++generation;
+            android.util.Log.e("OfflineWorld", "Local world start timed out");
+        }
+        return state;
+    }
+
+    private static synchronized boolean isCurrent(int attempt) {
+        return state == 1 && generation == attempt;
+    }
+
+    private static synchronized void finish(int attempt, int result) {
+        if (generation == attempt && state == 1) state = result;
+    }
+
+    private static void launch(Context context, int attempt) {
         try {
             File directory = new File(context.getFilesDir(), "world-2001");
-            // Refresh only immutable assets. SQLite saves live beside them and are never overwritten.
-            File marker = new File(directory, ".assets-v1");
-            if (!marker.exists()) {
-                unpack(context, "offline-world", directory);
-                if (!marker.createNewFile()) throw new IOException("Cannot mark extracted assets");
+            // Only bundled assets are replaced; the SQLite database and WAL stay intact.
+            synchronized (unpackLock) {
+                if (!isCurrent(attempt)) return;
+                File marker = new File(directory, ".assets-v2");
+                if (!marker.exists()) {
+                    unpack(context, "offline-world", directory);
+                    if (!marker.createNewFile()) throw new IOException("Cannot mark extracted assets");
+                }
             }
+            if (!isCurrent(attempt)) return;
             context.startService(new Intent(context, OfflineService.class));
-            for (int i = 0; i < 300; i++) {
+            while (isCurrent(attempt)) {
+                if (getState() != 1) return;
                 try (Socket socket = new Socket()) {
                     socket.connect(new InetSocketAddress("127.0.0.1", 43595), 100);
-                    return true;
+                    finish(attempt, 2);
+                    return;
                 } catch (IOException notReady) { Thread.sleep(100); }
             }
-        } catch (Exception error) { android.util.Log.e("OfflineWorld", "World startup failed", error); }
-        return false;
+        } catch (Exception error) {
+            android.util.Log.e("OfflineWorld", "World startup failed", error);
+            finish(attempt, -1);
+        }
     }
 }

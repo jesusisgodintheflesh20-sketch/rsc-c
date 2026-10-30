@@ -22,11 +22,38 @@ adb shell settings put global airplane_mode_on 1
 adb shell svc wifi disable
 adb shell svc data disable
 adb logcat -c
+# Simulate an interrupted installation: the marker exists but the service's
+# required configuration is absent. Retry must remain possible afterward.
+adb shell run-as "$package" sh -c 'mkdir -p files/world-2001 && touch files/world-2001/.assets-v2'
 adb shell am start -n "$package/org.scape2003.mudclient.mudclientActivity"
 sleep 20
 adb exec-out screencap -p > android-test/01-welcome.png
 tap_button android-test/01-welcome.png play
-sleep 30
+# The service cannot load its deliberately missing configuration. Wait for
+# the bounded startup deadline and verify that the app reports the failure.
+failed=0
+for attempt in $(seq 1 60); do
+    if adb logcat -d -s OfflineWorld:E | grep -q 'Local world start timed out'; then
+        failed=1
+        break
+    fi
+    sleep 1
+done
+test "$failed" = 1
+sleep 2
+adb exec-out screencap -p > android-test/02-start-failed.png
+# Repair the missing asset marker and retry via the same user-visible button.
+adb shell run-as "$package" rm files/world-2001/.assets-v2
+tap_button android-test/02-start-failed.png play
+logged_in=0
+for attempt in $(seq 1 90); do
+    if adb logcat -d -s SDL/APP:I | grep -q 'Login response: 0'; then
+        logged_in=1
+        break
+    fi
+    sleep 1
+done
+test "$logged_in" = 1
 adb exec-out screencap -p > android-test/02-character.png
 tap_button android-test/02-character.png accept
 sleep 15
@@ -42,5 +69,23 @@ with sqlite3.connect('android-test/rsc.sqlite') as db:
     row=db.execute('select username,login_date,rpg_class from players').fetchone()
     assert row and row[1]>0 and row[2]!=255, f'Offline character creation/login failed: {row}'
     assert db.execute('select count(*) from players_inventory').fetchone()[0]>0
-    print('PASS: Android world started with internet disabled; character and starter inventory persisted',row)
+    print('PASS: startup failure and retry; offline character and starter inventory persisted',row)
 PY
+# Reopen the installed app without deleting its data and resume the same save.
+adb logcat -c
+adb shell am start -n "$package/org.scape2003.mudclient.mudclientActivity"
+sleep 15
+adb exec-out screencap -p > android-test/04-relaunch.png
+tap_button android-test/04-relaunch.png play
+resumed=0
+for attempt in $(seq 1 90); do
+    if adb logcat -d -s SDL/APP:I | grep -q 'Login response: 0'; then
+        resumed=1
+        break
+    fi
+    sleep 1
+done
+test "$resumed" = 1
+sleep 5
+adb exec-out screencap -p > android-test/05-resumed.png
+echo 'PASS: offline character resumed after restarting the app'

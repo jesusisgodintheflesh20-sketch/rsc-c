@@ -52,8 +52,8 @@ def login():
     keys=[12345,67890,*struct.unpack('>II',session)]
     # Client pads both fields to 20 characters, then appends a newline.
     block=b'\x0a'+struct.pack('>4II',*keys,0)+b'Adventurer'.ljust(20)+b'\n'+b'offlineworld'.ljust(20)+b'\n'
-    exponent=int('81f390b2cf8ca7039ee507975951d5a0b15a87bf8b3f99c966834118c50fd94d',16)
-    modulus=int('88c38748a58228f7261cdc340b5691d7d0975dee0ecdb717609e6bf971eb3fe723ef9d130e4686813739768ad9472eb46d8bfcc042c1a5fcb05e931f632eea5d',16)
+    exponent=int('10001',16)
+    modulus=int('bafe89212f1d00b87648328e6e78853255c7dd5837e2883bb704b1f63c1e42a28109d0be1a9dfd71c8a260e8ec5a97e70ec26aa6a010c4e8a83182bebfb0d993',16)
     encrypted=pow(int.from_bytes(block,'big'),exponent,modulus).to_bytes(64,'big').lstrip(b'\0')
     s.sendall(frame(b'\0\0'+struct.pack('>H',203)+bytes([0,len(encrypted)])+encrypted))
     response=receive(s,1)[0]
