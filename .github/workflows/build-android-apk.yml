@@ -7,6 +7,7 @@ on:
       - '.github/workflows/build-android-apk.yml'
       - 'org.scape2003.mudclient/**'
       - 'src/**'
+      - 'offline/**'
 
 permissions:
   contents: read
@@ -48,7 +49,8 @@ jobs:
           "$SDKMANAGER" --sdk_root="$ANDROID_HOME" --install \
             'platforms;android-34' \
             'build-tools;34.0.0' \
-            'ndk;25.2.9519653'
+            'ndk;25.2.9519653' \
+            'cmake;3.22.1'
           echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/25.2.9519653" >> "$GITHUB_ENV"
           echo "ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/25.2.9519653" >> "$GITHUB_ENV"
 
@@ -57,15 +59,15 @@ jobs:
         run: |
           set -euxo pipefail
           chmod +x gradlew
-          ./gradlew --no-daemon --stacktrace assembleDebug
-          test -s app/build/outputs/apk/debug/app-debug.apk
-          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --verbose --print-certs app/build/outputs/apk/debug/app-debug.apk
-          "$ANDROID_HOME/build-tools/34.0.0/zipalign" -c -v 4 app/build/outputs/apk/debug/app-debug.apk
+          ./gradlew --no-daemon --stacktrace assembleOfflineDebug
+          test -s app/build/outputs/apk/offline/debug/app-offline-debug.apk
+          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --verbose --print-certs app/build/outputs/apk/offline/debug/app-offline-debug.apk
+          "$ANDROID_HOME/build-tools/34.0.0/zipalign" -c -v 4 app/build/outputs/apk/offline/debug/app-offline-debug.apk
 
       - name: Upload signed APK
         uses: actions/upload-artifact@v4
         with:
-          name: 2003scape-installable-apk
-          path: org.scape2003.mudclient/app/build/outputs/apk/debug/app-debug.apk
+          name: rsc-offline-2001-apk
+          path: org.scape2003.mudclient/app/build/outputs/apk/offline/debug/app-offline-debug.apk
           if-no-files-found: error
           retention-days: 30

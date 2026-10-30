@@ -12,6 +12,17 @@ android {
         namespace "org.scape2003.mudclient"
     }
     compileSdkVersion 34
+    ndkVersion '25.2.9519653'
+    flavorDimensions 'mode'
+    productFlavors {
+        online { dimension 'mode'; manifestPlaceholders = [appLabel: '2003Scape'] }
+        offline {
+            dimension 'mode'
+            applicationIdSuffix '.offline'
+            manifestPlaceholders = [appLabel: 'RSC Offline (2001)']
+            externalNativeBuild { ndkBuild { cFlags '-DOFFLINE_WORLD' } }
+        }
+    }
     defaultConfig {
         minSdkVersion 19
         targetSdkVersion 34
@@ -64,5 +75,6 @@ android {
 }
 
 dependencies {
+    offlineImplementation project(':offline-server')
     implementation fileTree(include: ['*.jar'], dir: 'libs')
 }

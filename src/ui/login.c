@@ -1,5 +1,21 @@
 #include "login.h"
 
+#ifdef OFFLINE_WORLD
+#include <jni.h>
+static int start_offline_world(void) {
+    JNIEnv *env = SDL_AndroidGetJNIEnv();
+    jobject activity = SDL_AndroidGetActivity();
+    if (!env || !activity) return 0;
+    jclass cls = (*env)->GetObjectClass(env, activity);
+    jmethodID method = (*env)->GetMethodID(env, cls, "startOfflineWorld", "()Z");
+    int ready = method && (*env)->CallBooleanMethod(env, activity, method);
+    if ((*env)->ExceptionCheck(env)) { (*env)->ExceptionClear(env); ready = 0; }
+    (*env)->DeleteLocalRef(env, cls);
+    (*env)->DeleteLocalRef(env, activity);
+    return ready;
+}
+#endif
+
 void mudclient_create_login_panels(mudclient *mud) {
     int is_compact = mud->surface->width < MUD_VANILLA_WIDTH ||
                      mud->surface->height < MUD_VANILLA_HEIGHT;
@@ -19,6 +35,9 @@ void mudclient_create_login_panels(mudclient *mud) {
     // TODO divorce registration from p2p
     int show_registration =
         !mud->options->members || mud->options->registration;
+#ifdef OFFLINE_WORLD
+    show_registration = 0;
+#endif
 
     if (show_registration) {
         int offset_x = is_compact ? 16 : 0;
@@ -63,11 +82,23 @@ void mudclient_create_login_panels(mudclient *mud) {
 
         panel_add_text_centre(mud->panel_login_welcome, x,
                               login_background_height + y,
-                              "Welcome to RuneScape", font_style, 1);
+                              
+#ifdef OFFLINE_WORLD
+                              "RuneScape Classic - December 2001",
+#else
+                              "Welcome to RuneScape",
+#endif
+                              font_style, 1);
 
         panel_add_text_centre(
             mud->panel_login_welcome, x, login_background_height + 15 + y,
-            "You need a members account to use this server", font_style, 1);
+            
+#ifdef OFFLINE_WORLD
+                              "Singleplayer - saved on this device",
+#else
+                              "You need a members account to use this server",
+#endif
+                              font_style, 1);
 
         panel_add_button_background(mud->panel_login_welcome, x,
                                     login_background_height + 50 + y,
@@ -75,7 +106,12 @@ void mudclient_create_login_panels(mudclient *mud) {
 
         panel_add_text_centre(
             mud->panel_login_welcome, x, login_background_height + 50 + y,
+            
+#ifdef OFFLINE_WORLD
+            "Play / Continue offline",
+#else
             is_touch ? "Tap here to login" : "Click here to login",
+#endif
             FONT_BOLD_16, 0);
 
         mud->control_welcome_existing_user = panel_add_button(
@@ -83,7 +119,11 @@ void mudclient_create_login_panels(mudclient *mud) {
             button_width, 35);
     }
 
-    if (mud->options->show_additional_options) {
+    if (mud->options->show_additional_options
+#ifdef OFFLINE_WORLD
+        && 0
+#endif
+    ) {
         int button_x = (is_compact ? MUD_MIN_WIDTH : MUD_VANILLA_WIDTH) - 36;
 
         int button_y =
@@ -929,6 +969,21 @@ void mudclient_handle_login_screen_input(mudclient *mud) {
             }
         } else if (panel_is_clicked(mud->panel_login_welcome,
                                     mud->control_welcome_existing_user)) {
+#ifdef OFFLINE_WORLD
+            surface_draw_string_centre(mud->surface, "Starting your offline world...", mud->surface->width / 2, mud->surface->height / 2, FONT_BOLD_14, WHITE);
+            surface_draw(mud->surface);
+            if (!start_offline_world()) {
+                surface_draw_string_centre(mud->surface, "World startup failed. Please reopen the app.", mud->surface->width / 2, mud->surface->height / 2 + 22, FONT_BOLD_14, WHITE);
+                surface_draw(mud->surface);
+                return;
+            }
+            strcpy(mud->server, "127.0.0.1");
+            mud->port = 43595;
+            strcpy(mud->rsa_exponent, "81f390b2cf8ca7039ee507975951d5a0b15a87bf8b3f99c966834118c50fd94d");
+            strcpy(mud->rsa_modulus, "88c38748a58228f7261cdc340b5691d7d0975dee0ecdb717609e6bf971eb3fe723ef9d130e4686813739768ad9472eb46d8bfcc042c1a5fcb05e931f632eea5d");
+            mudclient_login(mud, "Adventurer", "offlineworld", 0);
+            return;
+#endif
             mud->login_screen = LOGIN_STAGE_EXISTING;
 
             if (is_compact) {

@@ -128,6 +128,12 @@ void mudclient_new(mudclient *mud) {
 
     options_new(mud->options);
     options_load(mud->options);
+#ifdef OFFLINE_WORLD
+    mud->options->members = 0;
+    mud->options->version_config = 46;
+    mud->options->version_maps = 27;
+    mud->options->registration = 0;
+#endif
 
     mud->camera_zoom = mud->options->zoom_camera ? ZOOM_OUTDOORS : ZOOM_INDOORS;
 
@@ -970,6 +976,7 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
     FILE *archive_stream = fopen(prefixed_file, "rb");
 #endif
 
+    #ifndef ANDROID
     /* attempt to read cache from the current working directory first */
     if (archive_stream == NULL) {
         /* cwd failed, now try the xdg home directory... */
@@ -999,6 +1006,8 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
             archive_stream = fopen(prefixed_file, "rb");
         }
     }
+
+    #endif
 
     if (archive_stream == NULL) {
         mud_error("Unable to read file: %s\n", prefixed_file);
