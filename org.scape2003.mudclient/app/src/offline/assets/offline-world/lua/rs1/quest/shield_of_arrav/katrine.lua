@@ -124,23 +124,14 @@ local function katrine_known(player, npc)
 end
 
 function talknpc_katrine(player, npc)
-	local stage = getvar(player, "phoenix_stage")
-	if stage >= 2 then
-		npcsay(npc, "You've got some guts coming here")
-		npcsay(npc, "Phoenix guy")
-		mes(player, "Katrine Spits")
-		delay(3)
-		npcsay(npc, "Now go away")
-		npcsay(npc, "Or I'll make sure you 'aven't got those guts anymore")
-		return
-	end
-	stage = getvar(player, "blackarm_stage")
+	-- Offline singleplayer: the other gang does not require a second player.
+	local stage = getvar(player, "blackarm_stage")
 	if stage == 0 then
 		say(player, "What is this place?")
 		npcsay(npc, "It's a private business")
 		npcsay(npc, "Can I help you at all?")
 		stage = getvar(player, "blackarm_known")
-		if known == 0 then
+		if stage == 0 then
 			local resp = multi(player,
 				"What sort of business",
 				"I'm looking for fame and riches")

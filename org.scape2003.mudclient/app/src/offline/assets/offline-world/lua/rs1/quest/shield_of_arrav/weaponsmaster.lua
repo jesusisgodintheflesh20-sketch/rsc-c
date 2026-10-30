@@ -10,8 +10,9 @@ function takeobj_phoenix_crossbow(player, x, y)
 			npcattack(npc, player)
 			return
 		else
-			npcsay(npc, "Hey, that's Straven's")
-			npcsay(npc, "He won't like you messing with that")
+			-- A solo character must obtain these for the Black Arm storyline.
+			mes(player, "You borrow a crossbow from the gang's weapons stash")
+			takeobject(player, "phoenix crossbow", x, y)
 			return
 		end
 	end
