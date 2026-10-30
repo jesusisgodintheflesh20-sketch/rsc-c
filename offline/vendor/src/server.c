@@ -68,7 +68,7 @@ main(int argc, char **argv)
 {
 	extern char *optarg;
 	extern int optind;
-	char ch;
+	int ch;
 	char *basedir = "./data";
 	char *conffile = "./data/settings.ini";
 

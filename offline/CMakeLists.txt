@@ -13,6 +13,10 @@ set(SOURCES ${ENGINE} ${LUA} ${TOM}
  deps/sqlite/sqlite3.c
  deps/argon2/src/argon2.c deps/argon2/src/core.c deps/argon2/src/encoding.c deps/argon2/src/ref.c deps/argon2/src/thread.c deps/argon2/src/blake2/blake2b.c
  deps/bzip2/blocksort.c deps/bzip2/huffman.c deps/bzip2/crctable.c deps/bzip2/randtable.c deps/bzip2/compress.c deps/bzip2/decompress.c deps/bzip2/bzlib.c)
+option(OFFLINE_TEST_UNSIGNED_CHAR "Test server startup with ARM-style unsigned char" OFF)
+if(OFFLINE_TEST_UNSIGNED_CHAR AND NOT ANDROID)
+ set_source_files_properties(vendor/src/server.c PROPERTIES COMPILE_OPTIONS "-funsigned-char")
+endif()
 if(ANDROID)
  add_library(sundae SHARED ${SOURCES} android-jni.c)
  set_source_files_properties(vendor/src/server.c PROPERTIES COMPILE_DEFINITIONS "main=sundae_main")
