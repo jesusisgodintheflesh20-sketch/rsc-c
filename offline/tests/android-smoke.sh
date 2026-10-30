@@ -24,7 +24,8 @@ adb shell svc data disable
 adb logcat -c
 # Simulate an interrupted installation: the marker exists but the service's
 # required configuration is absent. Retry must remain possible afterward.
-adb shell run-as "$package" sh -c 'mkdir -p files/world-2001 && touch files/world-2001/.assets-v2'
+adb shell run-as "$package" mkdir -p files/world-2001
+adb shell run-as "$package" touch files/world-2001/.assets-v2
 adb shell am start -n "$package/org.scape2003.mudclient.mudclientActivity"
 sleep 20
 adb exec-out screencap -p > android-test/01-welcome.png
