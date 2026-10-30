@@ -241,7 +241,7 @@ process_packet(struct player *p, uint8_t *data, size_t len)
 
 			player_send_privacy_settings(p);
 
-			if (p->login_date == 0) {
+			if (p->login_date == 0 || p->rpg_class == UINT8_MAX) {
 				p->mob.x = p->mob.server->start_tile_x;
 				p->mob.y = p->mob.server->start_tile_y;
 

@@ -23,3 +23,6 @@ endif()
 target_compile_definitions(sundae PRIVATE WITH_RSA_LIBTOM ARGON2_NO_THREADS LUA_USE_POSIX SQLITE_THREADSAFE=1)
 target_include_directories(sundae PRIVATE vendor/src/ext/libjag/include vendor/src/ext/inih deps/lua/src deps/tommath deps/sqlite deps/argon2/include deps/bzip2)
 target_link_libraries(sundae m dl)
+
+# LibTomMath uses constant-condition feature dispatch; dead calls must be eliminated.
+target_compile_options(sundae PRIVATE -O2)
