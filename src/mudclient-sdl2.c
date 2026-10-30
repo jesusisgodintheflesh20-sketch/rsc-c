@@ -156,6 +156,9 @@ void mudclient_start_application(mudclient *mud, char *title) {
 #endif /* EMSCRIPTEN */
 #endif /* RENDER_GL */
 
+#ifdef OFFLINE_WORLD
+    SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
+#endif
     mud->window =
         SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                          mud->game_width, mud->game_height, windowflags);

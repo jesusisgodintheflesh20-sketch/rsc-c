@@ -32,7 +32,7 @@ jobs:
       - name: Test embedded engine and persistent character
         working-directory: .
         run: |
-          python3 offline/tools/client_config.py
+          python3 offline/tests/client-config.py
           git diff --exit-code -- org.scape2003.mudclient/app/src/offline/assets/config46.jag
           cmake -S offline -B /tmp/sundae-build -DCMAKE_BUILD_TYPE=Release
           cmake --build /tmp/sundae-build -j 4

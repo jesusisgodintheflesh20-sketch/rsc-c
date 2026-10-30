@@ -2,6 +2,17 @@
 set -euo pipefail
 package=org.scape2003.mudclient.offline
 mkdir -p android-test
+trap 'adb logcat -d > android-test/logcat.txt' EXIT
+function tap_button() {
+    read -r x y < <(python3 - "$1" "$2" <<'PYCODE'
+import struct,sys
+w,h=struct.unpack('>II',open(sys.argv[1],'rb').read()[16:24])
+compact=w<512 or h<346
+print(w//2, h//2 + ((77 if compact else 117) if sys.argv[2]=='play' else (92 if compact else 143)))
+PYCODE
+)
+    adb shell input tap "$x" "$y"
+}
 adb install -r org.scape2003.mudclient/app/build/outputs/apk/offline/debug/app-offline-debug.apk
 adb shell wm size 480x800
 adb shell settings put system accelerometer_rotation 0
@@ -13,10 +24,10 @@ adb logcat -c
 adb shell am start -n "$package/org.scape2003.mudclient.mudclientActivity"
 sleep 20
 adb exec-out screencap -p > android-test/01-welcome.png
-adb shell input tap 400 357
+tap_button android-test/01-welcome.png play
 sleep 30
 adb exec-out screencap -p > android-test/02-character.png
-adb shell input tap 400 383
+tap_button android-test/02-character.png accept
 sleep 15
 adb exec-out screencap -p > android-test/03-world.png
 adb logcat -d > android-test/logcat.txt
