@@ -7,7 +7,7 @@ src/wii/*.o
 src/gl/*.o
 src/gl/textures/*.o
 src/custom/*.o
-mudclient
+/mudclient
 *.dol
 *.elf
 mudclient.exe

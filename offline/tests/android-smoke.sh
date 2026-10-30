@@ -8,7 +8,8 @@ function tap_button() {
 import struct,sys
 w,h=struct.unpack('>II',open(sys.argv[1],'rb').read()[16:24])
 compact=w<512 or h<346
-print(w//2, h//2 + ((77 if compact else 117) if sys.argv[2]=='play' else (92 if compact else 143)))
+# SDL stretches its logical surface to the emulator display.
+print(w//2, round(h * (0.83 if sys.argv[2]=='play' else 0.92)))
 PYCODE
 )
     adb shell input tap "$x" "$y"
