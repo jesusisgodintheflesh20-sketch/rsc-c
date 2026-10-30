@@ -2682,7 +2682,11 @@ void mudclient_start_game(mudclient *mud) {
         return;
     }
 
-    if (mud->options->members && !mud->options->lowmem) {
+    if ((mud->options->members
+#ifdef OFFLINE_WORLD
+        || 1
+#endif
+        ) && !mud->options->lowmem) {
         mudclient_load_sounds(mud);
     }
 
@@ -5389,7 +5393,11 @@ void mudclient_send_logout(mudclient *mud) {
 }
 
 void mudclient_play_sound(mudclient *mud, char *name) {
-    if (!mud->options->members || mud->settings_sound_disabled ||
+    if ((!mud->options->members
+#ifdef OFFLINE_WORLD
+         && 0
+#endif
+         ) || mud->settings_sound_disabled ||
         mud->options->lowmem) {
         return;
     }
