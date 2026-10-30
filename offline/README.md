@@ -18,7 +18,10 @@ only on 127.0.0.1:43595. SDL connects using an automatically created local
 Adventurer character over the original RSA/ISAAC protocol. The service has a
 separate working directory and native globals; it cannot change the client's cwd.
 Assets and scripts are extracted on first use. There are no runtime downloads.
-Both client and server use matching config46/maps27 archives, verified against
+Both client and server use matching 2001 definitions and maps. The server
+archive uses its original text format; `tools/client_config.py` reproducibly
+converts those tables to binary client format, using texture names from the
+existing visual pack. Original server archives are verified against
 upstream's published SHA-256 checksums:
 
 - config46.jag: 304ff7147a21119c4e47f913f5d27d65de8222d69d2f3317dff569d8a4061e94

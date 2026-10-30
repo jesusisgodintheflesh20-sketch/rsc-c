@@ -133,6 +133,8 @@ void mudclient_new(mudclient *mud) {
     mud->options->version_config = 46;
     mud->options->version_maps = 27;
     mud->options->registration = 0;
+    mud->options->rename_herblaw_items = 0;
+    mud->options->diversify_npcs = 0;
 #endif
 
     mud->camera_zoom = mud->options->zoom_camera ? ZOOM_OUTDOORS : ZOOM_INDOORS;
