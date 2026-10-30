@@ -124,6 +124,7 @@ stat_advance(struct player *player, int stat,
 		    "@gre@You just advanced %d %s level!",
 		    gained, skill_names[stat]);
 		player_send_message(player, msg);
+		player_send_sound(player, "advance");
 		player->mob.cur_stats[stat] += gained;
 		player->mob.base_stats[stat] = level;
 		player_send_stat(player, stat);
@@ -133,6 +134,9 @@ stat_advance(struct player *player, int stat,
 		}
 	} else {
 		player_send_stat_xp(player, stat);
+		if (stat == SKILL_MINING) player_send_sound(player, "mine");
+		else if (stat == SKILL_FISHING) player_send_sound(player, "fish");
+		else if (stat == SKILL_COOKING) player_send_sound(player, "cooking");
 	}
 }
 

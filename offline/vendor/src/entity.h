@@ -477,6 +477,7 @@ int player_send_design_ui(struct player *);
 int player_send_logout(struct player *);
 int player_send_logout_reject(struct player *);
 int player_send_message(struct player *, const char *);
+int player_send_sound(struct player *, const char *);
 int player_send_stat(struct player *, int);
 int player_send_stat_xp(struct player *, int);
 int player_send_init_stats(struct player *);

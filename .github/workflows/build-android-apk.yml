@@ -33,6 +33,9 @@ jobs:
         working-directory: .
         run: |
           python3 offline/tests/client-config.py
+          python3 offline/tests/sound-assets.py
+          cc -std=gnu99 -O2 -ffunction-sections -fdata-sections -Wl,--gc-sections -DWITH_RSA_LIBTOM -Ioffline/vendor/src/ext/libjag/include -Ioffline/vendor/src/ext/inih -Ioffline/deps/lua/src -Ioffline/deps/tommath -Ioffline/deps/sqlite -Ioffline/deps/argon2/include offline/tests/sound-packet.c offline/vendor/src/protocol/outgoing.c offline/vendor/src/protocol/opcodes203.c offline/vendor/src/protocol/opcodes201.c offline/vendor/src/buffer.c offline/vendor/src/ext/isaac.c -o /tmp/sound-packet-test
+          /tmp/sound-packet-test
           git diff --exit-code -- org.scape2003.mudclient/app/src/offline/assets/config46.jag
           cmake -S offline -B /tmp/sundae-build -DCMAKE_BUILD_TYPE=Release -DOFFLINE_TEST_UNSIGNED_CHAR=ON
           cmake --build /tmp/sundae-build -j 4

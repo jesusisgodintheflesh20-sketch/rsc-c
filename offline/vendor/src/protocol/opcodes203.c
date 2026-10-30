@@ -65,6 +65,7 @@ init_opcodes_203(void)
 	opcodes_in_203[247] = OP_CLI_ITEM_TAKE;
 	opcodes_in_203[187] = OP_CLI_WALK_TILE;
 
+	opcodes_out_203[OP_SRV_SOUND] = 204;
 	opcodes_out_203[OP_SRV_MESSAGE] = 131;
 	opcodes_out_203[OP_SRV_LOGOUT] = 4;
 	opcodes_out_203[OP_SRV_LOGOUT_REJECT] = 183;

@@ -734,6 +734,16 @@ player_send_design_ui(struct player *p)
 }
 
 int
+player_send_sound(struct player *p, const char *name)
+{
+    size_t len = strlen(name);
+    if (p->protocol_rev != 203 || len > PLAYER_BUFSIZE - 1) return -1;
+    p->tmpbuf[0] = OP_SRV_SOUND;
+    if (buf_putdata(p->tmpbuf, 1, PLAYER_BUFSIZE, (void *)name, len) == -1) return -1;
+    return player_write_packet(p, p->tmpbuf, len + 1);
+}
+
+int
 player_send_message(struct player *p, const char *s)
 {
 	size_t offset = 0;

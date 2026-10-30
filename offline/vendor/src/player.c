@@ -540,6 +540,7 @@ void
 player_die(struct player *p, struct player *victor)
 {
 	struct item_config *item;
+	player_send_sound(p, "death");
 
 	if (victor != NULL &&
 	    victor->mob.in_combat && p->mob.in_combat &&
@@ -604,6 +605,7 @@ player_die(struct player *p, struct player *victor)
 void
 player_damage(struct player *p, struct player *aggressor, int roll)
 {
+	if (roll > 0) player_send_sound(p, "combat1a");
 	if (roll >= p->mob.cur_stats[SKILL_HITS]) {
 		player_die(p, aggressor);
 		return;

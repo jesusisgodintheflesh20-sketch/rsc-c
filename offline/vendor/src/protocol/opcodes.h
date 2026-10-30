@@ -70,6 +70,7 @@
 #define OP_SRV_INIT_IGNORE		(26)
 #define OP_SRV_PRIVACY_SETTINGS		(27)
 #define OP_SRV_PRIVATE_MESSAGE		(28)
+#define OP_SRV_SOUND			(200)
 #define OP_SRV_SHOW_MESBOX		(204)
 #define OP_SRV_SHOW_EFFECT		(206)
 #define OP_SRV_STAT			(211)
