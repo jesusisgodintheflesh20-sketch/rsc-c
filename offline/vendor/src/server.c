@@ -54,6 +54,15 @@ usage(void)
 	fputs("rscsundae [-b basedir] [-d] [-f conffile]\n", stderr);
 }
 
+#ifdef __ANDROID__
+static void offline_status(const char *stage) {
+    FILE *f = fopen("startup-status.txt", "w");
+    if (f) { fputs(stage, f); fclose(f); }
+}
+#else
+#define offline_status(stage) ((void)0)
+#endif
+
 int
 main(int argc, char **argv)
 {
@@ -114,6 +123,7 @@ main(int argc, char **argv)
 	stat_calculate_table();
 
 #ifndef FUZZ
+	offline_status("Reading world settings");
 	if (ini_parse(conffile, server_parse_settings, &s) < 0) {
 		fprintf(stderr, "error parsing ./data/settings.ini\n");
 		return EXIT_FAILURE;
@@ -121,17 +131,20 @@ main(int argc, char **argv)
 
 	(void)chdir(basedir);
 
+	offline_status("Opening saved character");
 	if (database_init(&s.database)) {
 		fprintf(stderr, "failed to initialize database\n");
 		return EXIT_FAILURE;
 	}
 
+	offline_status("Loading game definitions");
 	if (load_config_jag() == -1) {
 		fprintf(stderr, "error reading config.jag\n");
 		fprintf(stderr, "did you run the fetch-jag-files script from the data directory?\n");
 		return EXIT_FAILURE;
 	}
 
+	offline_status("Loading game map");
 	if (load_maps_jag() == -1) {
 		fprintf(stderr, "error reading maps.jag\n");
 		fprintf(stderr, "did you run the fetch-jag-files script from the data directory?\n");
@@ -139,6 +152,7 @@ main(int argc, char **argv)
 	}
 
 	printf("loading script engine... ");
+	offline_status("Loading world scripts");
 	s.lua = script_init(&s);
 	if (s.lua == NULL) {
 		printf("failed\n");
@@ -147,6 +161,7 @@ main(int argc, char **argv)
 	printf("done\n");
 
 	printf("calculating password hashing params... ");
+	offline_status("Preparing local character");
 	if (pwhash_init(&s.hash) != -1) {
 		printf("time = %u, memory = %u\n",
 		    s.hash.t_cost, s.hash.m_cost);
@@ -167,6 +182,7 @@ main(int argc, char **argv)
 	s.item_config_count = 1;
 #endif
 
+	offline_status("Preparing local security");
 	if (rsa_init(&s.rsa, s.rsa_exponent, s.rsa_modulus) == -1) {
 		fprintf(stderr, "failed to initialize with rsa private key\n");
 		return EXIT_FAILURE;
@@ -180,6 +196,7 @@ main(int argc, char **argv)
 #endif
 
 #ifndef FUZZ
+	offline_status("Starting local world");
 	if (loop_start(&s) == -1) {
 		return EXIT_FAILURE;
 	}

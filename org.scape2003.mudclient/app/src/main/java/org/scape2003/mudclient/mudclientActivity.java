@@ -15,6 +15,13 @@ public class mudclientActivity extends SDLActivity {
         }
     }
 
+    public String offlineWorldFailure() {
+        try {
+            return (String) Class.forName("org.scape2003.mudclient.OfflineWorld")
+                .getMethod("getFailure").invoke(null);
+        } catch (Exception error) { return "Could not read engine status"; }
+    }
+
     public int offlineWorldState() {
         try {
             return (Integer) Class.forName("org.scape2003.mudclient.OfflineWorld")

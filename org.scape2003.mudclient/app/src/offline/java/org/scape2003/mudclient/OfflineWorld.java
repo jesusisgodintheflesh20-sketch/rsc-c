@@ -24,6 +24,7 @@ public final class OfflineWorld {
     private static final long START_TIMEOUT_MS = 45000;
     // 0 idle, 1 starting, 2 ready, -1 failed.
     private static int state;
+    private static Context appContext;
     private static long startedAt;
     private static int generation;
 
@@ -33,6 +34,7 @@ public final class OfflineWorld {
         startedAt = SystemClock.elapsedRealtime();
         final int attempt = ++generation;
         final Context app = context.getApplicationContext();
+        appContext = app;
         new Thread(() -> launch(app, attempt), "offline-startup").start();
     }
 
@@ -43,6 +45,15 @@ public final class OfflineWorld {
             android.util.Log.e("OfflineWorld", "Local world start timed out");
         }
         return state;
+    }
+
+    public static synchronized String getFailure() {
+        if (appContext == null) return "Startup failed";
+        File file = new File(appContext.getFilesDir(), "world-2001/startup-status.txt");
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line = reader.readLine();
+            return line == null ? "No engine status" : line;
+        } catch (IOException error) { return "Could not start world service"; }
     }
 
     private static synchronized boolean isCurrent(int attempt) {

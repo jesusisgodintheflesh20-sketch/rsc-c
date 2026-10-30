@@ -15,6 +15,22 @@ static int start_offline_world(void) {
     return ready;
 }
 static int offline_starting = 0;
+static void offline_show_failure(void) {
+    JNIEnv *env = SDL_AndroidGetJNIEnv();
+    jobject activity = SDL_AndroidGetActivity();
+    if (!env || !activity) { strcpy(login_screen_status, "Unable to start. Tap Play to retry."); return; }
+    jclass cls = (*env)->GetObjectClass(env, activity);
+    jmethodID method = (*env)->GetMethodID(env, cls, "offlineWorldFailure", "()Ljava/lang/String;");
+    jstring value = method ? (jstring)(*env)->CallObjectMethod(env, activity, method) : NULL;
+    if ((*env)->ExceptionCheck(env)) { (*env)->ExceptionClear(env); value = NULL; }
+    if (value) {
+        const char *text = (*env)->GetStringUTFChars(env, value, NULL);
+        if (text) { snprintf(login_screen_status, sizeof(login_screen_status), "World error: %.120s", text); (*env)->ReleaseStringUTFChars(env, value, text); }
+        (*env)->DeleteLocalRef(env, value);
+    } else strcpy(login_screen_status, "Unable to start. Tap Play to retry.");
+    (*env)->DeleteLocalRef(env, cls);
+    (*env)->DeleteLocalRef(env, activity);
+}
 static int offline_world_state(void) {
     JNIEnv *env = SDL_AndroidGetJNIEnv();
     jobject activity = SDL_AndroidGetActivity();
@@ -963,7 +979,7 @@ void mudclient_handle_login_screen_input(mudclient *mud) {
             mudclient_login(mud, "Adventurer", "offlineworld", 0);
         } else if (state < 0) {
             offline_starting = 0;
-            strcpy(login_screen_status, "Unable to start. Tap Play to retry.");
+            offline_show_failure();
         }
         return;
     }
