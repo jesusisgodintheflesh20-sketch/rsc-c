@@ -73,6 +73,24 @@ jobs:
           "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --verbose --print-certs app/build/outputs/apk/offline/debug/app-offline-debug.apk
           "$ANDROID_HOME/build-tools/34.0.0/zipalign" -c -v 4 app/build/outputs/apk/offline/debug/app-offline-debug.apk
 
+      - name: Upload signed APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: rsc-offline-2001-apk
+          path: org.scape2003.mudclient/app/build/outputs/apk/offline/debug/app-offline-debug.apk
+          if-no-files-found: error
+          retention-days: 30
+
+  android-smoke:
+    needs: build
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: rsc-offline-2001-apk
+          path: org.scape2003.mudclient/app/build/outputs/apk/offline/debug/
       - name: Enable emulator acceleration
         working-directory: .
         run: |
@@ -98,10 +116,3 @@ jobs:
           path: android-test/
           if-no-files-found: ignore
 
-      - name: Upload signed APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: rsc-offline-2001-apk
-          path: org.scape2003.mudclient/app/build/outputs/apk/offline/debug/app-offline-debug.apk
-          if-no-files-found: error
-          retention-days: 30

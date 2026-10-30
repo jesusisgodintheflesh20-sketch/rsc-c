@@ -70,9 +70,15 @@ s,rng=login()
 # New characters must finish the original appearance/class selection flow.
 # A network login and persisted world state prove this is a real server session.
 send(s,rng,235,bytes([1,0,1,2,2,8,14,0]))
-time.sleep(2)
-send(s,rng,187,struct.pack('>HH',120,649))
-time.sleep(2)
+# Wait for server ticks and autosaving rather than assuming a fixed tick phase.
+for attempt in range(20):
+    time.sleep(.6)
+    send(s,rng,187,struct.pack('>HH',120,649))
+    if (world/'rsc.sqlite').exists():
+        with sqlite3.connect(world/'rsc.sqlite') as db:
+            saved=db.execute('select x,y,rpg_class from players').fetchone()
+            if saved and saved[:2]==(120,649) and saved[2]!=255:
+                break
 s.settimeout(2)
 world_data=s.recv(65536)
 assert len(world_data)>100, 'Expected world/inventory/NPC packets'
