@@ -30,7 +30,8 @@ Redistribution notices are bundled in the APK's offline-world/licenses folder.
 
 Local changes to the engine: initialize LibTomMath integers before use, include
 unistd.h, save approximately every six seconds, and reopen unfinished character
-design on reconnect. Native startup is exposed through a JNI entry point.
+design on reconnect. Native startup is exposed through a JNI entry point. Lua uses a C-locale decimal
+point on Android API 19/20, where localeconv is unavailable.
 The offline scripts allow joining both Shield of Arrav gangs and borrowing
 Phoenix crossbows so the quest does not require a second human player.
 
@@ -49,6 +50,8 @@ Immutable bundled assets never replace the save database. The offline package is
 From org.scape2003.mudclient, run `./gradlew assembleOfflineDebug`.
 Requires Java 17, SDK/build-tools 34, NDK 25.2.9519653, CMake 3.22.1.
 Output: app/build/outputs/apk/offline/debug/app-offline-debug.apk.
+A deliberately public debug-only keystore is included so subsequent debug APKs
+can update this app without uninstalling and losing saves. It is not a release key.
 The workflow verifies signatures and alignment, exercises encrypted sessions,
 character creation, movement, inventory, persistence and reconnection against the
 host engine, and runs the Android app on an emulator with Wi-Fi/data disabled.

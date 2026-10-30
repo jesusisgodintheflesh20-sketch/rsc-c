@@ -668,7 +668,12 @@
 ** macro must include the header 'locale.h'.)
 */
 #if !defined(lua_getlocaledecpoint)
-#define lua_getlocaledecpoint()		(localeconv()->decimal_point[0])
+#if defined(__ANDROID__) && __ANDROID_API__ < 21
+/* localeconv was introduced at API 21. Game scripts use C-locale numbers. */
+#define lua_getlocaledecpoint() '.'
+#else
+#define lua_getlocaledecpoint() (localeconv()->decimal_point[0])
+#endif
 #endif
 
 
