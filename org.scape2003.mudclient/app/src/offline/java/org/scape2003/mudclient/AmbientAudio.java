@@ -72,7 +72,8 @@ public final class AmbientAudio {
                 if (!fromUser) return;
                 prefs.edit().putInt(key, value).apply();
                 MediaPlayer player = key.equals("music") ? music : forest;
-                if (player != null) player.setVolume(value / 100f, value / 100f);
+                float volume = value / 100f * (key.equals("forest") ? 0.45f : 1f);
+                if (player != null) player.setVolume(volume, volume);
             }
             public void onStartTrackingTouch(SeekBar bar) {}
             public void onStopTrackingTouch(SeekBar bar) {}
@@ -105,7 +106,7 @@ public final class AmbientAudio {
             pause(music);
             return;
         }
-        if (forest == null) forest = createPlayer(context, "forest-ambient.m4a", preferences(context).getInt("forest", 25) / 100f);
+        if (forest == null) forest = createPlayer(context, "forest-ambient.m4a", preferences(context).getInt("forest", 25) / 100f * 0.45f);
         if (music == null) music = createPlayer(context, "background-music.m4a", preferences(context).getInt("music", 32) / 100f);
         start(forest, "Forest ambience playing");
         start(music, "Background music playing");
