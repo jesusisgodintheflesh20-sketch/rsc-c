@@ -85,8 +85,8 @@ public final class AmbientAudio {
         layout.setOrientation(LinearLayout.VERTICAL);
         int padding = (int) (24 * activity.getResources().getDisplayMetrics().density);
         layout.setPadding(padding, padding / 2, padding, 0);
-        addVolumeSlider(activity, layout, "Music", "music", 32);
-        addVolumeSlider(activity, layout, "Ambient sound", "forest", 25);
+        addVolumeSlider(activity, layout, "Music", "music", 100);
+        addVolumeSlider(activity, layout, "Ambient sound", "forest", 52);
         new AlertDialog.Builder(activity).setTitle("Sound")
             .setView(layout).setPositiveButton("Done", null).show();
     }
@@ -106,8 +106,8 @@ public final class AmbientAudio {
             pause(music);
             return;
         }
-        if (forest == null) forest = createPlayer(context, "forest-ambient.m4a", preferences(context).getInt("forest", 25) / 100f * 0.45f);
-        if (music == null) music = createPlayer(context, "background-music.m4a", preferences(context).getInt("music", 32) / 100f);
+        if (forest == null) forest = createPlayer(context, "forest-ambient.m4a", preferences(context).getInt("forest", 52) / 100f * 0.45f);
+        if (music == null) music = createPlayer(context, "background-music.m4a", preferences(context).getInt("music", 100) / 100f);
         start(forest, "Forest ambience playing");
         start(music, "Background music playing");
     }
