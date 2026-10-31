@@ -59,6 +59,7 @@ adb exec-out screencap -p > android-test/02-character.png
 tap_button android-test/02-character.png accept
 sleep 15
 adb logcat -d -s AmbientAudio:I '*:S' | grep -q 'Forest ambience playing'
+adb logcat -d -s AmbientAudio:I '*:S' | grep -q 'Background music playing'
 adb exec-out screencap -p > android-test/03-world.png
 adb logcat -d > android-test/logcat.txt
 adb shell am force-stop "$package"
@@ -90,5 +91,6 @@ done
 test "$resumed" = 1
 sleep 5
 adb logcat -d -s AmbientAudio:I '*:S' | grep -q 'Forest ambience playing'
+adb logcat -d -s AmbientAudio:I '*:S' | grep -q 'Background music playing'
 adb exec-out screencap -p > android-test/05-resumed.png
 echo 'PASS: offline character resumed after restarting the app'
