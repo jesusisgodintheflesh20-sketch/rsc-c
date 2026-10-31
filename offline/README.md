@@ -46,7 +46,9 @@ background music at a slightly higher playback volume. The in-game Options tab's
 Sound effects control turns effects, ambience, and music on or off. The
 Sound option opens separate sliders, saved on the device. The
 tracks pause when the app is backgrounded and require no network connection.
-Combat effects play on attack rounds, including zero-damage hits.
+Combat effects play on attack rounds, including zero-damage hits. Damaging
+attacks combine the impact with a short synthesized grunt; the offline sound
+archive can be rebuilt with `python3 offline/tools/make-combat-audio.py`.
 
 SQLite persists position, appearance, skills, inventory, bank, and quest variables
 in private app storage at `files/world-2001/rsc.sqlite` (with SQLite WAL files).

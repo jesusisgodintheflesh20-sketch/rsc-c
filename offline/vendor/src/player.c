@@ -607,7 +607,7 @@ player_damage(struct player *p, struct player *aggressor, int roll)
 {
 	if (roll > 0 || p->mob.in_combat) player_send_sound(p, "combat1a");
 	if (aggressor != NULL && aggressor != p)
-		player_send_sound(aggressor, "combat1b");
+		player_send_sound(aggressor, roll > 0 ? "combathit" : "combat1b");
 	if (roll >= p->mob.cur_stats[SKILL_HITS]) {
 		player_die(p, aggressor);
 		return;

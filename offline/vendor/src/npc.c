@@ -113,7 +113,7 @@ npc_die(struct npc *npc, struct player *p)
 void
 npc_damage(struct npc *npc, struct player *p , int roll)
 {
-	if (p != NULL) player_send_sound(p, "combat1b");
+	if (p != NULL) player_send_sound(p, roll > 0 ? "combathit" : "combat1b");
 	if (roll >= npc->mob.cur_stats[SKILL_HITS]) {
 		npc->mob.cur_stats[SKILL_HITS] = 0;
 		npc_die(npc, p);
