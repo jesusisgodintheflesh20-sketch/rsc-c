@@ -11,7 +11,19 @@ android {
     if (buildAsApplication) {
         namespace "org.scape2003.mudclient"
     }
+    androidResources { noCompress 'm4a' }
     compileSdkVersion 34
+    ndkVersion '25.2.9519653'
+    flavorDimensions 'mode'
+    productFlavors {
+        online { dimension 'mode'; manifestPlaceholders = [appLabel: '2003Scape'] }
+        offline {
+            dimension 'mode'
+            applicationIdSuffix '.offline'
+            manifestPlaceholders = [appLabel: 'RSC Offline (2001)']
+            externalNativeBuild { ndkBuild { cFlags '-DOFFLINE_WORLD' } }
+        }
+    }
     defaultConfig {
         minSdkVersion 19
         targetSdkVersion 34
@@ -23,6 +35,15 @@ android {
                 abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
                 cFlags "-Ofast -DRENDER_SW -DSDL2"
             }
+        }
+    }
+    signingConfigs {
+        debug {
+            // Deliberately public debug-only key: updates keep local offline saves.
+            storeFile file('../../offline/debug.keystore')
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
         }
     }
     buildTypes {
@@ -64,5 +85,6 @@ android {
 }
 
 dependencies {
+    offlineImplementation project(':offline-server')
     implementation fileTree(include: ['*.jar'], dir: 'libs')
 }

@@ -2,7 +2,11 @@
 #include "options-tab.h"
 
 static bool sound_visible(mudclient *mud) {
+#ifdef OFFLINE_WORLD
+    return !mud->options->lowmem;
+#else
     return mud->options->members && !mud->options->lowmem;
+#endif
 }
 
 void mudclient_send_privacy_settings(mudclient *mud, int chat, int private_chat,
@@ -200,6 +204,11 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
         ui_y = (UI_TABS_TOUCH_Y + UI_TABS_TOUCH_HEIGHT) - height - 2;
     }
 
+#ifdef OFFLINE_WORLD
+    height += OPTIONS_LINE_BREAK;
+    if (is_touch) ui_y -= OPTIONS_LINE_BREAK;
+#endif
+
     if (mud->options->version_media >= 59) {
         mudclient_draw_ui_tab_label(mud, OPTIONS_TAB, OPTIONS_WIDTH + !is_touch,
                                     ui_x - !is_touch,
@@ -227,6 +236,9 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
         controls_box_height += OPTIONS_LINE_BREAK;
     }
 
+#ifdef OFFLINE_WORLD
+    controls_box_height += OPTIONS_LINE_BREAK;
+#endif
     surface_draw_box_alpha(mud->surface, ui_x, ui_y, OPTIONS_WIDTH,
                            controls_box_height, GREY_B5, 160);
 
@@ -305,6 +317,12 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
 
         y += OPTIONS_LINE_BREAK;
     }
+
+#ifdef OFFLINE_WORLD
+    surface_draw_string(mud->surface, "Sound", x, y,
+                        FONT_BOLD_12, WHITE);
+    y += OPTIONS_LINE_BREAK;
+#endif
 
     if (mud->options->show_additional_options) {
         int text_colour = WHITE;
@@ -543,6 +561,9 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
             mud->mouse_x < x + OPTIONS_WIDTH && mud->mouse_y > y - 12 &&
             mud->mouse_y < y + 4 && mud->mouse_button_click == 1) {
             mud->settings_sound_disabled = !mud->settings_sound_disabled;
+#ifdef OFFLINE_WORLD
+            mudclient_set_ambient(!mud->settings_sound_disabled);
+#endif
             packet_stream_new_packet(mud->packet_stream, CLIENT_SETTINGS_GAME);
             packet_stream_put_byte(mud->packet_stream, 3);
 
@@ -555,6 +576,16 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
         if (sound_visible(mud)) {
             y += OPTIONS_LINE_BREAK;
         }
+
+#ifdef OFFLINE_WORLD
+        if (mud->mouse_x > x && mud->mouse_x < x + OPTIONS_WIDTH &&
+            mud->mouse_y > y - 12 && mud->mouse_y < y + 4 &&
+            mud->mouse_button_click == 1) {
+            mudclient_set_ambient(-5);
+            mud->mouse_button_click = 0;
+        }
+        y += OPTIONS_LINE_BREAK;
+#endif
 
         if (mud->options->show_additional_options) {
             if (mud->mouse_x > x && mud->mouse_x < x + OPTIONS_WIDTH &&

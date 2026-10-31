@@ -1,5 +1,50 @@
 #include "login.h"
 
+#ifdef OFFLINE_WORLD
+#include <jni.h>
+static int start_offline_world(void) {
+    JNIEnv *env = SDL_AndroidGetJNIEnv();
+    jobject activity = SDL_AndroidGetActivity();
+    if (!env || !activity) return 0;
+    jclass cls = (*env)->GetObjectClass(env, activity);
+    jmethodID method = (*env)->GetMethodID(env, cls, "startOfflineWorld", "()Z");
+    int ready = method && (*env)->CallBooleanMethod(env, activity, method);
+    if ((*env)->ExceptionCheck(env)) { (*env)->ExceptionClear(env); ready = 0; }
+    (*env)->DeleteLocalRef(env, cls);
+    (*env)->DeleteLocalRef(env, activity);
+    return ready;
+}
+static int offline_starting = 0;
+static void offline_show_failure(void) {
+    JNIEnv *env = SDL_AndroidGetJNIEnv();
+    jobject activity = SDL_AndroidGetActivity();
+    if (!env || !activity) { strcpy(login_screen_status, "Unable to start. Tap Play to retry."); return; }
+    jclass cls = (*env)->GetObjectClass(env, activity);
+    jmethodID method = (*env)->GetMethodID(env, cls, "offlineWorldFailure", "()Ljava/lang/String;");
+    jstring value = method ? (jstring)(*env)->CallObjectMethod(env, activity, method) : NULL;
+    if ((*env)->ExceptionCheck(env)) { (*env)->ExceptionClear(env); value = NULL; }
+    if (value) {
+        const char *text = (*env)->GetStringUTFChars(env, value, NULL);
+        if (text) { snprintf(login_screen_status, sizeof(login_screen_status), "World error: %.120s", text); (*env)->ReleaseStringUTFChars(env, value, text); }
+        (*env)->DeleteLocalRef(env, value);
+    } else strcpy(login_screen_status, "Unable to start. Tap Play to retry.");
+    (*env)->DeleteLocalRef(env, cls);
+    (*env)->DeleteLocalRef(env, activity);
+}
+static int offline_world_state(void) {
+    JNIEnv *env = SDL_AndroidGetJNIEnv();
+    jobject activity = SDL_AndroidGetActivity();
+    if (!env || !activity) return -1;
+    jclass cls = (*env)->GetObjectClass(env, activity);
+    jmethodID method = (*env)->GetMethodID(env, cls, "offlineWorldState", "()I");
+    int state = method ? (*env)->CallIntMethod(env, activity, method) : -1;
+    if ((*env)->ExceptionCheck(env)) { (*env)->ExceptionClear(env); state = -1; }
+    (*env)->DeleteLocalRef(env, cls);
+    (*env)->DeleteLocalRef(env, activity);
+    return state;
+}
+#endif
+
 void mudclient_create_login_panels(mudclient *mud) {
     int is_compact = mud->surface->width < MUD_VANILLA_WIDTH ||
                      mud->surface->height < MUD_VANILLA_HEIGHT;
@@ -19,6 +64,9 @@ void mudclient_create_login_panels(mudclient *mud) {
     // TODO divorce registration from p2p
     int show_registration =
         !mud->options->members || mud->options->registration;
+#ifdef OFFLINE_WORLD
+    show_registration = 0;
+#endif
 
     if (show_registration) {
         int offset_x = is_compact ? 16 : 0;
@@ -63,11 +111,23 @@ void mudclient_create_login_panels(mudclient *mud) {
 
         panel_add_text_centre(mud->panel_login_welcome, x,
                               login_background_height + y,
-                              "Welcome to RuneScape", font_style, 1);
+                              
+#ifdef OFFLINE_WORLD
+                              "RuneScape Classic - December 2001",
+#else
+                              "Welcome to RuneScape",
+#endif
+                              font_style, 1);
 
         panel_add_text_centre(
             mud->panel_login_welcome, x, login_background_height + 15 + y,
-            "You need a members account to use this server", font_style, 1);
+            
+#ifdef OFFLINE_WORLD
+                              "Singleplayer - saved on this device",
+#else
+                              "You need a members account to use this server",
+#endif
+                              font_style, 1);
 
         panel_add_button_background(mud->panel_login_welcome, x,
                                     login_background_height + 50 + y,
@@ -75,7 +135,12 @@ void mudclient_create_login_panels(mudclient *mud) {
 
         panel_add_text_centre(
             mud->panel_login_welcome, x, login_background_height + 50 + y,
+            
+#ifdef OFFLINE_WORLD
+            "Play / Continue offline",
+#else
             is_touch ? "Tap here to login" : "Click here to login",
+#endif
             FONT_BOLD_16, 0);
 
         mud->control_welcome_existing_user = panel_add_button(
@@ -83,7 +148,11 @@ void mudclient_create_login_panels(mudclient *mud) {
             button_width, 35);
     }
 
-    if (mud->options->show_additional_options) {
+    if (mud->options->show_additional_options
+#ifdef OFFLINE_WORLD
+        && 0
+#endif
+    ) {
         int button_x = (is_compact ? MUD_MIN_WIDTH : MUD_VANILLA_WIDTH) - 36;
 
         int button_y =
@@ -423,6 +492,11 @@ void mudclient_show_login_screen_status(mudclient *mud, char *s, char *s1) {
     int is_compact = mud->surface->width < MUD_VANILLA_WIDTH ||
                      mud->surface->height < MUD_VANILLA_HEIGHT;
 
+#ifdef OFFLINE_WORLD
+    if (mud->login_screen == LOGIN_STAGE_WELCOME) {
+        snprintf(login_screen_status, sizeof(login_screen_status), "%s %s", s, s1);
+    }
+#endif
     if (mud->login_screen == LOGIN_STAGE_NEW) {
         sprintf(login_screen_status, "%s %s", s, s1);
 
@@ -458,6 +532,9 @@ void mudclient_show_login_screen_status(mudclient *mud, char *s, char *s1) {
 }
 
 void mudclient_reset_login_screen(mudclient *mud) {
+#ifdef OFFLINE_WORLD
+    mudclient_set_ambient(0);
+#endif
     mud->logged_in = 0;
     mud->login_screen = LOGIN_STAGE_WELCOME;
 
@@ -842,6 +919,14 @@ void mudclient_draw_login_screens(mudclient *mud) {
         break;
     }
 
+#ifdef OFFLINE_WORLD
+    if (mud->login_screen == LOGIN_STAGE_WELCOME && login_screen_status[0]) {
+        surface_draw_string_centre(mud->surface, login_screen_status,
+                                  mud->surface->width / 2,
+                                  mud->surface->height / 2,
+                                  FONT_BOLD_14, WHITE);
+    }
+#endif
     if (!mud->options->lowmem) {
         mudclient_draw_blue_bar(mud);
     }
@@ -882,6 +967,26 @@ void mudclient_handle_login_screen_input(mudclient *mud) {
     if (mud->world_full_timeout > 0) {
         mud->world_full_timeout--;
     }
+
+#ifdef OFFLINE_WORLD
+    if (mud->login_screen == LOGIN_STAGE_WELCOME && offline_starting) {
+        int state = offline_world_state();
+        if (state == 2) {
+            offline_starting = 0;
+            strcpy(login_screen_status, "Opening your local character...");
+            mudclient_draw_login_screens(mud);
+            strcpy(mud->server, "127.0.0.1");
+            mud->port = 43595;
+            strcpy(mud->rsa_exponent, "00010001");
+            strcpy(mud->rsa_modulus, "bafe89212f1d00b87648328e6e78853255c7dd5837e2883bb704b1f63c1e42a28109d0be1a9dfd71c8a260e8ec5a97e70ec26aa6a010c4e8a83182bebfb0d993");
+            mudclient_login(mud, "Adventurer", "offlineworld", 0);
+        } else if (state < 0) {
+            offline_starting = 0;
+            offline_show_failure();
+        }
+        return;
+    }
+#endif
 
     switch (mud->login_screen) {
     case LOGIN_STAGE_WELCOME:
@@ -929,6 +1034,15 @@ void mudclient_handle_login_screen_input(mudclient *mud) {
             }
         } else if (panel_is_clicked(mud->panel_login_welcome,
                                     mud->control_welcome_existing_user)) {
+#ifdef OFFLINE_WORLD
+            if (start_offline_world()) {
+                offline_starting = 1;
+                strcpy(login_screen_status, "Starting your offline world...");
+            } else {
+                strcpy(login_screen_status, "Unable to start. Tap Play to retry.");
+            }
+            return;
+#endif
             mud->login_screen = LOGIN_STAGE_EXISTING;
 
             if (is_compact) {

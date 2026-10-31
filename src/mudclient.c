@@ -1,4 +1,7 @@
 #include "mudclient.h"
+#ifdef OFFLINE_WORLD
+#include <jni.h>
+#endif
 
 #ifdef EMSCRIPTEN
 /* clang doesn't know what triple equals is, understandably */
@@ -128,6 +131,14 @@ void mudclient_new(mudclient *mud) {
 
     options_new(mud->options);
     options_load(mud->options);
+#ifdef OFFLINE_WORLD
+    mud->options->members = 0;
+    mud->options->version_config = 46;
+    mud->options->version_maps = 27;
+    mud->options->registration = 0;
+    mud->options->rename_herblaw_items = 0;
+    mud->options->diversify_npcs = 0;
+#endif
 
     mud->camera_zoom = mud->options->zoom_camera ? ZOOM_OUTDOORS : ZOOM_INDOORS;
 
@@ -970,6 +981,7 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
     FILE *archive_stream = fopen(prefixed_file, "rb");
 #endif
 
+    #ifndef ANDROID
     /* attempt to read cache from the current working directory first */
     if (archive_stream == NULL) {
         /* cwd failed, now try the xdg home directory... */
@@ -999,6 +1011,8 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
             archive_stream = fopen(prefixed_file, "rb");
         }
     }
+
+    #endif
 
     if (archive_stream == NULL) {
         mud_error("Unable to read file: %s\n", prefixed_file);
@@ -1405,6 +1419,11 @@ void mudclient_load_media(mudclient *mud) {
 void mudclient_load_entities(mudclient *mud) {
 #if defined(RENDER_GL) || defined(RENDER_SW) || defined(RENDER_3DS_GL)
     char jag[16];
+    int load_member_sprites = mud->options->members;
+#ifdef OFFLINE_WORLD
+    /* Some 2001 creatures were moved into the later members art archive. */
+    load_member_sprites = 1;
+#endif
     snprintf(jag, sizeof(jag), "entity%d.jag", mud->options->version_entity);
 
     int8_t *entity_jag = mudclient_read_data_file(
@@ -1431,7 +1450,7 @@ void mudclient_load_entities(mudclient *mud) {
     int8_t *entity_jag_mem = NULL;
     int8_t *index_dat_mem = NULL;
 
-    if (mud->options->members && !ENTITY_IS_TGA(mud->options->version_entity)) {
+    if (load_member_sprites && !ENTITY_IS_TGA(mud->options->version_entity)) {
         snprintf(jag, sizeof(jag), "entity%d.mem",
             mud->options->version_entity);
 
@@ -1498,7 +1517,7 @@ void mudclient_load_entities(mudclient *mud) {
         int8_t *animation_dat = load_data(file_name, 0, archive_file, &len);
         int8_t *animation_index_dat = index_dat;
 
-        if (animation_dat == NULL && mud->options->members) {
+        if (animation_dat == NULL && load_member_sprites) {
             animation_dat = load_data(file_name, 0, entity_jag_mem, &len);
             animation_index_dat = index_dat_mem;
         }
@@ -1527,7 +1546,7 @@ void mudclient_load_entities(mudclient *mud) {
                 int8_t *a_dat = load_data(file_name, 0, archive_file, &len);
                 int8_t *a_index_dat = index_dat;
 
-                if (a_dat == NULL && mud->options->members) {
+                if (a_dat == NULL && load_member_sprites) {
                     a_dat = load_data(file_name, 0, entity_jag_mem, &len);
                     a_index_dat = index_dat_mem;
                 }
@@ -1553,7 +1572,7 @@ void mudclient_load_entities(mudclient *mud) {
                 int8_t *f_dat = load_data(file_name, 0, archive_file, &len);
                 int8_t *f_index_dat = index_dat;
 
-                if (f_dat == NULL && mud->options->members) {
+                if (f_dat == NULL && load_member_sprites) {
                     f_dat = load_data(file_name, 0, entity_jag_mem, &len);
                     f_index_dat = index_dat_mem;
                 }
@@ -2017,6 +2036,20 @@ void mudclient_reset_game(mudclient *mud) {
     mud->friend_list_count = 0;
 }
 
+#ifdef OFFLINE_WORLD
+void mudclient_set_ambient(int enabled) {
+    JNIEnv *env = SDL_AndroidGetJNIEnv();
+    jobject activity = SDL_AndroidGetActivity();
+    if (!env || !activity) return;
+    jclass cls = (*env)->GetObjectClass(env, activity);
+    jmethodID method = (*env)->GetMethodID(env, cls, "setOfflineAmbient", "(I)V");
+    if (method) (*env)->CallVoidMethod(env, activity, method, enabled);
+    if ((*env)->ExceptionCheck(env)) (*env)->ExceptionClear(env);
+    (*env)->DeleteLocalRef(env, cls);
+    (*env)->DeleteLocalRef(env, activity);
+}
+#endif
+
 void mudclient_login(mudclient *mud, char *username, char *password,
                      int reconnecting) {
     if (mud->world_full_timeout > 0) {
@@ -2181,6 +2214,9 @@ void mudclient_login(mudclient *mud, char *username, char *password,
         }
 
         mudclient_reset_game(mud);
+#ifdef OFFLINE_WORLD
+        mudclient_set_ambient(!mud->settings_sound_disabled);
+#endif
         return;
     }
 
@@ -2666,7 +2702,11 @@ void mudclient_start_game(mudclient *mud) {
         return;
     }
 
-    if (mud->options->members && !mud->options->lowmem) {
+    if ((mud->options->members
+#ifdef OFFLINE_WORLD
+        || 1
+#endif
+        ) && !mud->options->lowmem) {
         mudclient_load_sounds(mud);
     }
 
@@ -5373,7 +5413,11 @@ void mudclient_send_logout(mudclient *mud) {
 }
 
 void mudclient_play_sound(mudclient *mud, char *name) {
-    if (!mud->options->members || mud->settings_sound_disabled ||
+    if ((!mud->options->members
+#ifdef OFFLINE_WORLD
+         && 0
+#endif
+         ) || mud->settings_sound_disabled ||
         mud->options->lowmem) {
         return;
     }

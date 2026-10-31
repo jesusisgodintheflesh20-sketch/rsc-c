@@ -1,0 +1,2 @@
+#define HAVE_CLOCK_GETTIME 1
+#define HAVE_SYS_TIME_H 1

@@ -1,0 +1,5 @@
+lua https://www.lua.org/ftp/lua-5.4.8.tar.gz 4f18ddae154e793e46eeab727c59ef1c0c0c2b744e7b94219710d76f530629ae
+sqlite https://www.sqlite.org/2025/sqlite-amalgamation-3500400.zip 1d3049dd0f830a025a53105fc79fd2ab9431aea99e137809d064d8ee8356b032
+tommath https://codeload.github.com/libtom/libtommath/tar.gz/refs/tags/v1.3.0 6d099e93ff00fa9b18346f4bcd97dcc48c3e91286f7e16c4ac5515a7171c3149
+argon2 https://codeload.github.com/P-H-C/phc-winner-argon2/tar.gz/refs/tags/20190702 daf972a89577f8772602bf2eb38b6a3dd3d922bf5724d45e7f9589b5e830442c
+bzip2 https://sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz ab5a03176ee106d3f0fa90e381da478ddae405918153cca248e682cd0c4a2269

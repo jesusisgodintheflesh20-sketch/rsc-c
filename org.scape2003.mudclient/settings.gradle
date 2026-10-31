@@ -1,1 +1,4 @@
 include ':app'
+
+include ':offline-server'
+project(':offline-server').projectDir = file('../offline')

@@ -77,7 +77,11 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
     int init = SDL_INIT_VIDEO;
 
-    if (mud->options->members && !mud->options->lowmem) {
+    if ((mud->options->members
+#ifdef OFFLINE_WORLD
+        || 1
+#endif
+        ) && !mud->options->lowmem) {
         init |= SDL_INIT_AUDIO;
     }
 
@@ -102,7 +106,11 @@ void mudclient_start_application(mudclient *mud, char *title) {
 /* XXX: currently require non-callback-based audio from SDL >= 2.0.4 */
 #ifdef SDL_VERSION_ATLEAST
 #if SDL_VERSION_ATLEAST(2, 0, 4)
-    if (mud->options->members && !mud->options->lowmem) {
+    if ((mud->options->members
+#ifdef OFFLINE_WORLD
+        || 1
+#endif
+        ) && !mud->options->lowmem) {
         SDL_AudioSpec wanted_audio;
 
         wanted_audio.freq = SAMPLE_RATE;
@@ -156,6 +164,9 @@ void mudclient_start_application(mudclient *mud, char *title) {
 #endif /* EMSCRIPTEN */
 #endif /* RENDER_GL */
 
+#ifdef OFFLINE_WORLD
+    SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
+#endif
     mud->window =
         SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                          mud->game_width, mud->game_height, windowflags);

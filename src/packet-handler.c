@@ -1917,6 +1917,9 @@ void mudclient_packet_tick(mudclient *mud) {
         mud->settings_camera_auto = get_unsigned_byte(data, 1, size);
         mud->settings_mouse_button_one = get_unsigned_byte(data, 2, size);
         mud->settings_sound_disabled = get_unsigned_byte(data, 3, size);
+#ifdef OFFLINE_WORLD
+        mudclient_set_ambient(!mud->settings_sound_disabled);
+#endif
         break;
     }
     case SERVER_PRIVACY_SETTINGS: {
