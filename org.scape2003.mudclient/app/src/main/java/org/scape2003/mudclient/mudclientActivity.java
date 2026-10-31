@@ -6,9 +6,14 @@ public class mudclientActivity extends SDLActivity {
     public void setOfflineAmbient(int state) {
         runOnUiThread(() -> {
             try {
-                Class.forName("org.scape2003.mudclient.AmbientAudio")
-                    .getMethod("setState", android.content.Context.class, int.class)
-                    .invoke(null, this, state);
+                Class<?> audio = Class.forName("org.scape2003.mudclient.AmbientAudio");
+                if (state == -5) {
+                    audio.getMethod("showVolumeSettings", android.app.Activity.class)
+                        .invoke(null, this);
+                } else {
+                    audio.getMethod("setState", android.content.Context.class, int.class)
+                        .invoke(null, this, state);
+                }
             } catch (ClassNotFoundException ignored) {
                 // Online builds do not bundle ambient audio.
             } catch (Exception error) {

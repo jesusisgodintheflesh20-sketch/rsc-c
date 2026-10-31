@@ -1,6 +1,12 @@
 package org.scape2003.mudclient;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.widget.LinearLayout;
+import android.widget.SeekBar;
+import android.widget.TextView;
 import android.content.res.AssetFileDescriptor;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -46,6 +52,44 @@ public final class AmbientAudio {
         }
     }
 
+    private static SharedPreferences preferences(Context context) {
+        return context.getSharedPreferences("offline_audio", Context.MODE_PRIVATE);
+    }
+
+    private static void addVolumeSlider(Activity activity, LinearLayout layout,
+                                        String label, String key, int defaultVolume) {
+        SharedPreferences prefs = preferences(activity);
+        TextView title = new TextView(activity);
+        SeekBar slider = new SeekBar(activity);
+        slider.setMax(100);
+        slider.setProgress(prefs.getInt(key, defaultVolume));
+        title.setText(label + ": " + slider.getProgress() + "%");
+        layout.addView(title);
+        layout.addView(slider);
+        slider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {
+                title.setText(label + ": " + value + "%");
+                if (!fromUser) return;
+                prefs.edit().putInt(key, value).apply();
+                MediaPlayer player = key.equals("music") ? music : forest;
+                if (player != null) player.setVolume(value / 100f, value / 100f);
+            }
+            public void onStartTrackingTouch(SeekBar bar) {}
+            public void onStopTrackingTouch(SeekBar bar) {}
+        });
+    }
+
+    public static void showVolumeSettings(Activity activity) {
+        LinearLayout layout = new LinearLayout(activity);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        int padding = (int) (24 * activity.getResources().getDisplayMetrics().density);
+        layout.setPadding(padding, padding / 2, padding, 0);
+        addVolumeSlider(activity, layout, "Music", "music", 32);
+        addVolumeSlider(activity, layout, "Forest", "forest", 25);
+        new AlertDialog.Builder(activity).setTitle("Background volume")
+            .setView(layout).setPositiveButton("Done", null).show();
+    }
+
     public static void setState(Context context, int state) {
         if (state == -4) {
             enabled = false;
@@ -61,8 +105,8 @@ public final class AmbientAudio {
             pause(music);
             return;
         }
-        if (forest == null) forest = createPlayer(context, "forest-ambient.m4a", 0.25f);
-        if (music == null) music = createPlayer(context, "background-music.m4a", 0.32f);
+        if (forest == null) forest = createPlayer(context, "forest-ambient.m4a", preferences(context).getInt("forest", 25) / 100f);
+        if (music == null) music = createPlayer(context, "background-music.m4a", preferences(context).getInt("music", 32) / 100f);
         start(forest, "Forest ambience playing");
         start(music, "Background music playing");
     }
