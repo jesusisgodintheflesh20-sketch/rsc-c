@@ -40,6 +40,11 @@ Phoenix crossbows so the quest does not require a second human player.
 
 ## Saves
 
+The offline Android app includes the user-supplied forest recording as a
+low-volume, looping ambient track during play. The in-game Options tab's
+Sound effects control turns both the effects and ambience on or off. The
+track pauses when the app is backgrounded and requires no network connection.
+
 SQLite persists position, appearance, skills, inventory, bank, and quest variables
 in private app storage at `files/world-2001/rsc.sqlite` (with SQLite WAL files).
 Use the in-game Logout button to finish a session. Autosaving also runs roughly

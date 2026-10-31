@@ -1,4 +1,7 @@
 #include "mudclient.h"
+#ifdef OFFLINE_WORLD
+#include <jni.h>
+#endif
 
 #ifdef EMSCRIPTEN
 /* clang doesn't know what triple equals is, understandably */
@@ -2033,6 +2036,20 @@ void mudclient_reset_game(mudclient *mud) {
     mud->friend_list_count = 0;
 }
 
+#ifdef OFFLINE_WORLD
+void mudclient_set_ambient(int enabled) {
+    JNIEnv *env = SDL_AndroidGetJNIEnv();
+    jobject activity = SDL_AndroidGetActivity();
+    if (!env || !activity) return;
+    jclass cls = (*env)->GetObjectClass(env, activity);
+    jmethodID method = (*env)->GetMethodID(env, cls, "setOfflineAmbient", "(I)V");
+    if (method) (*env)->CallVoidMethod(env, activity, method, enabled);
+    if ((*env)->ExceptionCheck(env)) (*env)->ExceptionClear(env);
+    (*env)->DeleteLocalRef(env, cls);
+    (*env)->DeleteLocalRef(env, activity);
+}
+#endif
+
 void mudclient_login(mudclient *mud, char *username, char *password,
                      int reconnecting) {
     if (mud->world_full_timeout > 0) {
@@ -2197,6 +2214,9 @@ void mudclient_login(mudclient *mud, char *username, char *password,
         }
 
         mudclient_reset_game(mud);
+#ifdef OFFLINE_WORLD
+        mudclient_set_ambient(!mud->settings_sound_disabled);
+#endif
         return;
     }
 

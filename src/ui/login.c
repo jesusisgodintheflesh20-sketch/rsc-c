@@ -532,6 +532,9 @@ void mudclient_show_login_screen_status(mudclient *mud, char *s, char *s1) {
 }
 
 void mudclient_reset_login_screen(mudclient *mud) {
+#ifdef OFFLINE_WORLD
+    mudclient_set_ambient(0);
+#endif
     mud->logged_in = 0;
     mud->login_screen = LOGIN_STAGE_WELCOME;
 

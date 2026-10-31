@@ -2,7 +2,11 @@
 #include "options-tab.h"
 
 static bool sound_visible(mudclient *mud) {
+#ifdef OFFLINE_WORLD
+    return !mud->options->lowmem;
+#else
     return mud->options->members && !mud->options->lowmem;
+#endif
 }
 
 void mudclient_send_privacy_settings(mudclient *mud, int chat, int private_chat,
@@ -543,6 +547,9 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
             mud->mouse_x < x + OPTIONS_WIDTH && mud->mouse_y > y - 12 &&
             mud->mouse_y < y + 4 && mud->mouse_button_click == 1) {
             mud->settings_sound_disabled = !mud->settings_sound_disabled;
+#ifdef OFFLINE_WORLD
+            mudclient_set_ambient(!mud->settings_sound_disabled);
+#endif
             packet_stream_new_packet(mud->packet_stream, CLIENT_SETTINGS_GAME);
             packet_stream_put_byte(mud->packet_stream, 3);
 

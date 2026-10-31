@@ -3,6 +3,23 @@ package org.scape2003.mudclient;
 import org.libsdl.app.SDLActivity;
 
 public class mudclientActivity extends SDLActivity {
+    public void setOfflineAmbient(int state) {
+        runOnUiThread(() -> {
+            try {
+                Class.forName("org.scape2003.mudclient.AmbientAudio")
+                    .getMethod("setState", android.content.Context.class, int.class)
+                    .invoke(null, this, state);
+            } catch (ClassNotFoundException ignored) {
+                // Online builds do not bundle ambient audio.
+            } catch (Exception error) {
+                android.util.Log.e("AmbientAudio", "Unable to update ambience", error);
+            }
+        });
+    }
+    @Override protected void onPause() { setOfflineAmbient(-2); super.onPause(); }
+    @Override protected void onResume() { super.onResume(); setOfflineAmbient(-3); }
+    @Override protected void onDestroy() { setOfflineAmbient(-4); super.onDestroy(); }
+
     // Reflection keeps the online build independent of the offline-only classes.
     public boolean startOfflineWorld() {
         try {

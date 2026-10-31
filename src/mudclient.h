@@ -1161,6 +1161,9 @@ void mudclient_animate_objects(mudclient *mud);
 void mudclient_draw_entity_sprites(mudclient *mud);
 void mudclient_draw_game(mudclient *mud);
 void mudclient_reset_game(mudclient *mud);
+#ifdef OFFLINE_WORLD
+void mudclient_set_ambient(int enabled);
+#endif
 void mudclient_login(mudclient *mud, char *username, char *password,
                      int reconnecting);
 void mudclient_registration_login(mudclient *mud);

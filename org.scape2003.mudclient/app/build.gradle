@@ -11,6 +11,7 @@ android {
     if (buildAsApplication) {
         namespace "org.scape2003.mudclient"
     }
+    androidResources { noCompress 'm4a' }
     compileSdkVersion 34
     ndkVersion '25.2.9519653'
     flavorDimensions 'mode'
