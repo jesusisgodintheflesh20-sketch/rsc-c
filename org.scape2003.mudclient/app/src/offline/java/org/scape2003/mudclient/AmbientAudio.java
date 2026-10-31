@@ -62,7 +62,7 @@ public final class AmbientAudio {
             return;
         }
         if (forest == null) forest = createPlayer(context, "forest-ambient.m4a", 0.25f);
-        if (music == null) music = createPlayer(context, "background-music.m4a", 0.18f);
+        if (music == null) music = createPlayer(context, "background-music.m4a", 0.32f);
         start(forest, "Forest ambience playing");
         start(music, "Background music playing");
     }
