@@ -1,3 +1,13 @@
+# Experimental Android lighting build
+
+This branch builds a separate app, `org.scape2003.mudclient.offline.lightingtest`,
+with its own local character and saves. It does not overwrite the regular offline
+app. Options → Test lighting switches the experimental shading on and off for
+comparison. The effect approximates ambient fill and contact shadows in the
+software renderer; it is not physically simulated global illumination. Sprites
+and moving characters retain their original shading. The setting resets to on
+when the app restarts.
+
 # RSC Offline (2001)
 
 An Android-only, separate app flavor for the December 10, 2001 free-to-play world.

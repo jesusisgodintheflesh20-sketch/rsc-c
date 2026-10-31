@@ -19,9 +19,9 @@ android {
         online { dimension 'mode'; manifestPlaceholders = [appLabel: '2003Scape'] }
         offline {
             dimension 'mode'
-            applicationIdSuffix '.offline'
-            manifestPlaceholders = [appLabel: 'RSC Offline (2001)']
-            externalNativeBuild { ndkBuild { cFlags '-DOFFLINE_WORLD' } }
+            applicationIdSuffix '.offline.lightingtest'
+            manifestPlaceholders = [appLabel: 'RSC Lighting Test']
+            externalNativeBuild { ndkBuild { cFlags '-DOFFLINE_WORLD -DLIGHTING_TEST' } }
         }
     }
     defaultConfig {

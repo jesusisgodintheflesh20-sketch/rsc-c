@@ -1,3 +1,7 @@
+#ifdef LIGHTING_TEST
+extern int scene_lighting_test_enabled;
+#endif
+
 #ifndef _H_SCENE
 #define _H_SCENE
 #include <math.h>

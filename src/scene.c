@@ -1,5 +1,9 @@
 #include "scene.h"
 
+#ifdef LIGHTING_TEST
+int scene_lighting_test_enabled = 1;
+#endif
+
 #if defined(__GNUC__)
 #define likely(x)	(__builtin_expect(((x) != 0), 1))
 #define unlikely(x)	(__builtin_expect(((x) != 0), 0))
@@ -1484,6 +1488,27 @@ void scene_render(Scene *scene) {
                     }
                 }
 
+#ifdef LIGHTING_TEST
+                /* Approximate contact shadow on object bases and gently deepen
+                 * existing terrain occlusion; no extra geometry or light passes. */
+                int test_shade = vertex_shade;
+                if (scene_lighting_test_enabled) {
+                    if (!game_model->autocommit) {
+                        int span = game_model->max_y - game_model->min_y;
+                        if (span > 16 && span < 8192) {
+                            int from_base = game_model->max_y -
+                                game_model->vertex_transformed_y[vertex_index];
+                            if (from_base >= 0 && from_base < span / 2)
+                                test_shade += 8 * (span / 2 - from_base) / (span / 2);
+                        }
+                    } else if (game_model->vertex_ambience[vertex_index] > 8) {
+                        test_shade += 4;
+                    }
+                    test_shade -= 2; /* modest ambient fill */
+                }
+#else
+                int test_shade = vertex_shade;
+#endif
                 if (game_model->project_vertex_z[vertex_index] >=
                     scene->clip_near) {
                     scene->plane_x[plane_index] =
@@ -1492,7 +1517,7 @@ void scene_render(Scene *scene) {
                     scene->plane_y[plane_index] =
                         game_model->vertex_view_y[vertex_index];
 
-                    scene->vertex_shade[plane_index] = vertex_shade;
+                    scene->vertex_shade[plane_index] = test_shade;
 
                     if (game_model->project_vertex_z[vertex_index] >
                         scene->fog_z_distance) {
@@ -1544,7 +1569,7 @@ void scene_render(Scene *scene) {
                             //(j6 << scene->view_distance) / scene->clip_near;
                             (j6 * scene->view_distance) / scene->clip_near;
 
-                        scene->vertex_shade[plane_index] = vertex_shade;
+                        scene->vertex_shade[plane_index] = test_shade;
                         plane_index++;
                     }
 
@@ -1591,7 +1616,7 @@ void scene_render(Scene *scene) {
                             //(k6 << scene->view_distance) / scene->clip_near;
                             (k6 * scene->view_distance) / scene->clip_near;
 
-                        scene->vertex_shade[plane_index] = vertex_shade;
+                        scene->vertex_shade[plane_index] = test_shade;
                         plane_index++;
                     }
                 }

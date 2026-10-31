@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-package=org.scape2003.mudclient.offline
+package=org.scape2003.mudclient.offline.lightingtest
 mkdir -p android-test
 trap 'adb logcat -d > android-test/logcat.txt' EXIT
 function tap_button() {
