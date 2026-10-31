@@ -45,7 +45,8 @@ low-volume, looping ambient track during play, alongside the user-supplied
 background music at a slightly higher playback volume. The in-game Options tab's
 Sound effects control turns effects, ambience, and music on or off. The
 Sound option opens separate sliders, saved on the device. The
-tracks pause when the app is backgrounded and requires no network connection.
+tracks pause when the app is backgrounded and require no network connection.
+Combat effects play on attack rounds, including zero-damage hits.
 
 SQLite persists position, appearance, skills, inventory, bank, and quest variables
 in private app storage at `files/world-2001/rsc.sqlite` (with SQLite WAL files).
