@@ -86,7 +86,7 @@ public final class AmbientAudio {
         layout.setPadding(padding, padding / 2, padding, 0);
         addVolumeSlider(activity, layout, "Music", "music", 32);
         addVolumeSlider(activity, layout, "Forest", "forest", 25);
-        new AlertDialog.Builder(activity).setTitle("Background volume")
+        new AlertDialog.Builder(activity).setTitle("Sound")
             .setView(layout).setPositiveButton("Done", null).show();
     }
 

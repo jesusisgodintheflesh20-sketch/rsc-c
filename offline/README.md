@@ -44,7 +44,7 @@ The offline Android app includes the user-supplied forest recording as a
 low-volume, looping ambient track during play, alongside the user-supplied
 background music at a slightly higher playback volume. The in-game Options tab's
 Sound effects control turns effects, ambience, and music on or off. The
-Music / forest volume option opens separate sliders, saved on the device. The
+Sound option opens separate sliders, saved on the device. The
 tracks pause when the app is backgrounded and requires no network connection.
 
 SQLite persists position, appearance, skills, inventory, bank, and quest variables

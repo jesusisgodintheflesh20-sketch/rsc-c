@@ -319,7 +319,7 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
     }
 
 #ifdef OFFLINE_WORLD
-    surface_draw_string(mud->surface, "Music / forest volume...", x, y,
+    surface_draw_string(mud->surface, "Sound", x, y,
                         FONT_BOLD_12, WHITE);
     y += OPTIONS_LINE_BREAK;
 #endif
