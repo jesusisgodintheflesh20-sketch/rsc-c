@@ -1501,8 +1501,16 @@ void scene_render(Scene *scene) {
                             if (from_base >= 0 && from_base < span / 2)
                                 test_shade += 8 * (span / 2 - from_base) / (span / 2);
                         }
-                    } else if (game_model->vertex_ambience[vertex_index] > 8) {
-                        test_shade += 4;
+                    } else {
+                        int vx = game_model->vertex_transformed_x[vertex_index];
+                        int vz = game_model->vertex_transformed_z[vertex_index];
+                        if (vx >= 0 && vz >= 0 && (vx % 128) == 0 && (vz % 128) == 0) {
+                            int gx = vx / 128, gz = vz / 128;
+                            if (gx < 96 && gz < 96 &&
+                                abs(game_model->vertex_transformed_y[vertex_index] +
+                                    scene->baked_ground[gx][gz]) < 16)
+                                test_shade += scene->baked_ao[gx][gz];
+                        }
                     }
                     test_shade -= 2; /* modest ambient fill */
                 }
@@ -3156,6 +3164,9 @@ void scene_allocate_textures(Scene *scene, int count, int length_64,
     scene->texture_palette = calloc(count, sizeof(int32_t *));
     scene->texture_loaded_number = calloc(count, sizeof(int64_t));
     scene->texture_dimension = calloc(count, sizeof(int8_t));
+#ifdef LIGHTING_TEST
+    scene->texture_upscaled = calloc(count, sizeof(uint8_t));
+#endif
     scene->texture_back_transparent = calloc(count, sizeof(int8_t));
     scene->texture_pixels = calloc(count, sizeof(int32_t *));
 
@@ -3260,9 +3271,52 @@ static void scene_set_texture_pixels(Scene *scene, int id) {
 
     for (int x = 0; x < texture_width; x++) {
         for (int y = 0; y < texture_width; y++) {
-            int colour =
-                scene->texture_palette
-                    [id]
+            int colour;
+#ifdef LIGHTING_TEST
+            if (scene->texture_upscaled[id]) {
+                int sx = x / 2, sy = y / 2;
+                int sx1 = (sx + 1) & 63, sy1 = (sy + 1) & 63;
+                int8_t *src = scene->texture_colours[id];
+                int32_t *palette = scene->texture_palette[id];
+                int a = palette[src[sy + sx * 64] & 255];
+                int b = palette[src[sy + sx1 * 64] & 255];
+                int c = palette[src[sy1 + sx * 64] & 255];
+                int d = palette[src[sy1 + sx1 * 64] & 255];
+                /* Keep keyed transparent edges crisp instead of blending magenta. */
+                if ((a & 0xf8f8ff) == 0xf800ff || (b & 0xf8f8ff) == 0xf800ff ||
+                    (c & 0xf8f8ff) == 0xf800ff || (d & 0xf8f8ff) == 0xf800ff) {
+                    colour = a;
+                } else {
+                    int wx = x & 1, wy = y & 1;
+                    int r = (((a >> 16 & 255) * (2-wx) * (2-wy)) +
+                             ((b >> 16 & 255) * wx * (2-wy)) +
+                             ((c >> 16 & 255) * (2-wx) * wy) +
+                             ((d >> 16 & 255) * wx * wy)) / 4;
+                    int g = (((a >> 8 & 255) * (2-wx) * (2-wy)) +
+                             ((b >> 8 & 255) * wx * (2-wy)) +
+                             ((c >> 8 & 255) * (2-wx) * wy) +
+                             ((d >> 8 & 255) * wx * wy)) / 4;
+                    int blue = (((a & 255) * (2-wx) * (2-wy)) +
+                                ((b & 255) * wx * (2-wy)) +
+                                ((c & 255) * (2-wx) * wy) +
+                                ((d & 255) * wx * wy)) / 4;
+                    /* Deterministic sub-texel grain adds fine surface detail.
+                     * It tiles at texture boundaries and keeps colour shifts
+                     * small so the original material remains recognizable. */
+                    unsigned int grain = (unsigned int)((x & 127) * 73 +
+                        (y & 127) * 151 + id * 199);
+                    grain ^= grain >> 7;
+                    grain *= 2654435761u;
+                    int delta = (int)((grain >> 28) & 15) - 7;
+                    r += delta; g += delta; blue += delta;
+                    if (r < 0) r = 0; else if (r > 255) r = 255;
+                    if (g < 0) g = 0; else if (g > 255) g = 255;
+                    if (blue < 0) blue = 0; else if (blue > 255) blue = 255;
+                    colour = (r << 16) | (g << 8) | blue;
+                }
+            } else
+#endif
+                colour = scene->texture_palette[id]
                     [scene->texture_colours[id][y + x * texture_width] & 0xff];
 
             colour &= 0xf8f8ff;

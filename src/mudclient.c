@@ -1634,7 +1634,11 @@ void mudclient_load_textures(mudclient *mud) {
 
     int8_t *index_dat = load_data("index.dat", 0, textures_jag, NULL);
 
+#ifdef LIGHTING_TEST
+    scene_allocate_textures(mud->scene, game_data.texture_count, 7, game_data.texture_count);
+#else
     scene_allocate_textures(mud->scene, game_data.texture_count, 7, 11);
+#endif
 
     char file_name[255] = {0};
 
@@ -1708,11 +1712,20 @@ void mudclient_load_textures(mudclient *mud) {
         surface_screen_raster_to_palette_sprite(surface,
                                                 mud->sprite_texture_world + i);
 
+        int texture_is_128 = (texture_size / 64) - 1;
+#ifdef LIGHTING_TEST
+        /* Animated textures retain their native size for the scroll routine. */
+        if (texture_size == 64 && i != FOUNTAIN_ID &&
+            strcasecmp(game_data.textures[i].name, "water") != 0) {
+            mud->scene->texture_upscaled[i] = 1;
+            texture_is_128 = 1;
+        }
+#endif
         scene_define_texture(
             mud->scene, i,
             surface->sprite_colours[mud->sprite_texture_world + i],
             surface->sprite_palette[mud->sprite_texture_world + i],
-            (texture_size / 64) - 1);
+            texture_is_128);
 
         free(surface->surface_pixels[mud->sprite_texture_world + i]);
         surface->surface_pixels[mud->sprite_texture_world + i] = NULL;

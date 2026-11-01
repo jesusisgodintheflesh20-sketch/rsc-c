@@ -100,6 +100,11 @@ typedef struct GlModelTime {
 #endif
 
 struct Scene {
+#ifdef LIGHTING_TEST
+    uint8_t baked_ao[96][96];
+    int16_t baked_ground[96][96];
+    uint8_t *texture_upscaled;
+#endif
     int last_visible_polygons_count;
     int clip_near;
     int clip_far_3d;

@@ -4,7 +4,11 @@ This branch builds a separate app, `org.scape2003.mudclient.offline.lightingtest
 with its own local character and saves. It does not overwrite the regular offline
 app. Options → Test lighting switches the experimental shading on and off for
 comparison. The effect approximates ambient fill and contact shadows in the
-software renderer; it is not physically simulated global illumination. The
+software renderer; it is not physically simulated global illumination. Each
+region caches short ray tests through a coarse terrain-and-wall heightfield, so
+it does not include arbitrary object meshes or moving entities. Eligible 64×64
+textures are interpolated to 128×128 with generated fine grain; animated
+textures retain their original size. The
 experiment also adds simple character shadows, a subtle day–night colour cycle,
 sparse rain, a softer distance fade and animated water when available. Sprites
 retain their original shading. The setting resets to on

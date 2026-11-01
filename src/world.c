@@ -1,4 +1,7 @@
 #include "world.h"
+#ifdef LIGHTING_TEST
+#include "lighting-bake.h"
+#endif
 
 static void world_set_blocked(World *, int, int, int);
 static void world_set_unblocked(World *, int, int, int);
@@ -1008,6 +1011,31 @@ static void world_load_assemble(World *world, int x, int y, int plane,
     world_load_section_files(world, section_x, section_y, plane, 3);
 
     world_fill_edges(world);
+#ifdef LIGHTING_TEST
+    if (is_current_plane) {
+        /* Bake a small static heightfield approximation once per loaded region. */
+        int16_t ground[LIGHTING_GRID][LIGHTING_GRID];
+        uint16_t walls[LIGHTING_GRID][LIGHTING_GRID];
+        for (int bx = 0; bx < LIGHTING_GRID; bx++) {
+            for (int bz = 0; bz < LIGHTING_GRID; bz++) {
+                ground[bx][bz] = world_get_terrain_height(world, bx, bz);
+                int east = world_get_wall_east_west(world, bx, bz);
+                int north = world_get_wall_north_south(world, bx, bz);
+                int height = 0;
+                if (east > 0 && east <= game_data.wall_object_count)
+                    height = game_data.wall_objects[east - 1].height;
+                if (north > 0 && north <= game_data.wall_object_count &&
+                    game_data.wall_objects[north - 1].height > height)
+                    height = game_data.wall_objects[north - 1].height;
+                walls[bx][bz] = height;
+                world->scene->baked_ground[bx][bz] = ground[bx][bz];
+            }
+        }
+        for (int bx = 0; bx < LIGHTING_GRID; bx++)
+            for (int bz = 0; bz < LIGHTING_GRID; bz++)
+                world->scene->baked_ao[bx][bz] = lighting_bake_vertex(ground, walls, bx, bz);
+    }
+#endif
 
     if (world->parent_model == NULL) {
         world->parent_model = malloc(sizeof(GameModel));
