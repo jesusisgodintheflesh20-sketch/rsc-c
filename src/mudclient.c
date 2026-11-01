@@ -3583,6 +3583,16 @@ void mudclient_handle_game_input(mudclient *mud) {
 
 #ifdef RENDER_SW
     scene_scroll_texture(mud->scene, FOUNTAIN_ID);
+#ifdef LIGHTING_TEST
+    if (scene_lighting_test_enabled && (mud->object_animation_count & 3) == 0) {
+        for (int i = 0; i < game_data.texture_count; i++) {
+            if (i != FOUNTAIN_ID && game_data.textures[i].name &&
+                strcasecmp(game_data.textures[i].name, "water") == 0 &&
+                mud->scene->texture_dimension[i] == 0)
+                scene_scroll_texture(mud->scene, i);
+        }
+    }
+#endif
 #endif
 
     mud->object_animation_count++;
@@ -3839,6 +3849,14 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
                            float depth_bottom) {
     GameCharacter *player = mud->players[id];
 
+#ifdef LIGHTING_TEST
+    if (scene_lighting_test_enabled && player->bottom_colour != 255 && width > 2) {
+        int radius = width / 5;
+        if (radius > 18) radius = 18;
+        surface_draw_circle(mud->surface, x + width / 2, y + height - radius / 2,
+                            radius, BLACK, 55, depth_bottom);
+    }
+#endif
     if (player->bottom_colour == 255) {
         return;
     }
@@ -4035,6 +4053,14 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                         int id, int skew_x, int ty, float depth_top,
                         float depth_bottom) {
     GameCharacter *npc = mud->npcs[id];
+#ifdef LIGHTING_TEST
+    if (scene_lighting_test_enabled && width > 2) {
+        int radius = width / 5;
+        if (radius > 18) radius = 18;
+        surface_draw_circle(mud->surface, x + width / 2, y + height - radius / 2,
+                            radius, BLACK, 55, depth_bottom);
+    }
+#endif
 
     int animation_order =
         (npc->current_animation + (mud->camera_rotation + 16) / 32) & 7;
@@ -4813,6 +4839,13 @@ void mudclient_draw_game(mudclient *mud) {
         mud->scene->fog_z_distance = 20000;
     }
 
+#ifdef LIGHTING_TEST
+    if (scene_lighting_test_enabled && !mud->fog_of_war && mud->options->fog_of_war) {
+        /* Start the existing distance fade earlier for a softer horizon. */
+        mud->scene->fog_z_distance -= 300;
+    }
+#endif
+
     int camera_x = mud->camera_auto_rotate_player_x + mud->camera_rotation_x;
     int camera_z = mud->camera_auto_rotate_player_y + mud->camera_rotation_y;
 
@@ -4844,6 +4877,31 @@ void mudclient_draw_game(mudclient *mud) {
 #endif
 
     scene_render(mud->scene);
+
+#if defined(LIGHTING_TEST) && defined(RENDER_SW)
+    if (scene_lighting_test_enabled && !mud->fog_of_war) {
+        /* A gentle 20-minute visual cycle: short twilight, readable night. */
+        unsigned int phase = ((unsigned int)get_ticks() / 1000) % 1200;
+        int night = phase < 300 ? 0 : phase < 420 ? (int)(phase - 300) / 3 :
+                    phase < 780 ? 40 : phase < 900 ? (int)(900 - phase) / 3 : 0;
+        if (night > 0)
+            surface_draw_box_alpha(mud->surface, 0, 0, mud->surface->width,
+                                   mud->surface->height, 0x16234b, night);
+        else
+            surface_draw_box_alpha(mud->surface, 0, 0, mud->surface->width,
+                                   mud->surface->height, 0xd9a45d, 5);
+        /* Sparse cosmetic rain on a repeating cycle, without changing gameplay. */
+        if ((phase >= 510 && phase < 630) && mud->surface->width > 0 &&
+            mud->surface->height > 20) {
+            unsigned int tick = (unsigned int)get_ticks() / 65;
+            for (unsigned int i = 0; i < 28; i++) {
+                int rx = (i * 137 + tick * 3) % mud->surface->width;
+                int ry = (i * 83 + tick * 9) % (mud->surface->height - 18);
+                surface_draw_line_vertical(mud->surface, rx, ry, 5, 0x9eafbb);
+            }
+        }
+    }
+#endif
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     surface_gl_draw(mud->surface, GL_DEPTH_DISABLED);
